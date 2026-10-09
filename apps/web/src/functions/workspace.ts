@@ -63,7 +63,7 @@ async function siteLinks() {
   return {
     terms: vars.LEGAL_TERMS_URL || "/terms",
     privacy: vars.LEGAL_PRIVACY_URL || "/privacy",
-    source: vars.SOURCE_URL || "https://github.com/Heilonng23/openheard",
+    source: vars.SOURCE_URL || "https://github.com/amittam104/heardsy",
   };
 }
 

@@ -1,8 +1,8 @@
 <p align="center">
-  <a href="https://openheard.com"><img src="apps/web/public/favicon.svg" alt="openheard" width="56" /></a>
+  <a href="https://github.com/amittam104/heardsy"><img src="apps/web/public/favicon.svg" alt="Heardsy" width="56" /></a>
 </p>
 
-<h1 align="center">openheard</h1>
+<h1 align="center">Heardsy</h1>
 
 <p align="center">
   Open source feedback board, roadmap and changelog.<br />
@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://openheard.com">Website</a> ·
-  <a href="https://openheard.com/changelog">Changelog</a> ·
+  <a href="https://github.com/amittam104/heardsy">Source</a> ·
+  <a href="https://github.com/Heilonng23/openheard">Upstream</a> ·
   <a href="docs/api.md">API</a> ·
   <a href="docs/mcp.md">MCP</a> ·
   <a href="DESIGN.md">Design</a> ·
@@ -20,13 +20,17 @@
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="AGPL-3.0" /></a>
-  <a href="https://github.com/Heilonng23/openheard/stargazers"><img src="https://img.shields.io/github/stars/Heilonng23/openheard?style=flat" alt="GitHub stars" /></a>
-  <a href="https://github.com/Heilonng23/openheard/actions/workflows/ci.yml"><img src="https://github.com/Heilonng23/openheard/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/amittam104/heardsy/stargazers"><img src="https://img.shields.io/github/stars/amittam104/heardsy?style=flat" alt="GitHub stars" /></a>
+  <a href="https://github.com/amittam104/heardsy/actions/workflows/ci.yml"><img src="https://github.com/amittam104/heardsy/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
 </p>
 
 <p align="center">
   <img src="apps/web/public/landing/board.png" alt="openheard public board" width="900" />
 </p>
+
+Heardsy is a fork of [OpenHeard](https://github.com/Heilonng23/openheard),
+created for self-hosted feedback collection and an embeddable widget.
+The original AGPL-3.0 license and attribution are preserved.
 
 ## Why
 
@@ -34,7 +38,7 @@ Collecting feedback should not cost $79 a month or a weekend of Docker.
 Every open source feedback tool needs a VPS, Postgres and someone to babysit
 it, and most of them look like an admin template.
 
-openheard is one Cloudflare Worker and one D1 database. It deploys in two
+Heardsy is one Cloudflare Worker and one D1 database. It deploys in two
 commands, runs on the free tier, and is designed like a product people would
 pay for. Self-hosting is the default, not the afterthought.
 
@@ -74,21 +78,22 @@ pay for. Self-hosting is the default, not the afterthought.
   ([docs](docs/widget.md))
 - Multi-workspace: each workspace lives on its own subdomain
 
-Coming next: a CLI and a docs site.
+Internal package names and the widget API (`window.openheard` and
+`data-openheard-open`) retain their upstream names for compatibility.
 
 ## Get started
 
-### Cloud
+### Hosting
 
-Sign up at [openheard.com](https://openheard.com). Your board lives at
-`<slug>.openheard.com`. There is a free tier.
+Start with the local setup below. Heardsy does not have a hosted service yet.
+The upstream hosted service is available at [openheard.com](https://openheard.com).
 
 ### Self-host on Cloudflare
 
 Needs a Cloudflare account. Everything fits in the free tier.
 
 ```bash
-git clone https://github.com/Heilonng23/openheard && cd openheard
+git clone https://github.com/amittam104/heardsy && cd heardsy
 bun install
 cp packages/infra/.env.example packages/infra/.env   # set BETTER_AUTH_SECRET
 cd packages/infra && bunx alchemy login --configure && cd ../..
@@ -98,6 +103,10 @@ bun run deploy
 That provisions the Worker, the D1 database, KV and an R2 bucket for images,
 applies migrations and prints your URL. R2 has to be switched on once in the
 Cloudflare dashboard before the first deploy; its free tier covers 10 GB. The first account to sign up becomes the admin.
+
+Leave `EMAIL_FROM` blank to deploy without an email binding. Email delivery,
+including magic links and password resets, is unavailable until you configure it.
+Google sign-in can be used without email delivery.
 
 #### Behind Cloudflare Access
 
@@ -122,9 +131,13 @@ No Cloudflare account needed. A SQLite file stands in for D1.
 ```bash
 bun install
 bun run db:push:local   # creates apps/web/local.db
-bun run dev:local       # http://localhost:3001
+bun run dev:local       # http://localhost:3003
 bun run db:seed         # optional demo posts
 ```
+
+Local development reads the same `packages/infra/.env` for auth and Google
+credentials, while keeping the app URL at `http://localhost:3003` and using
+the local SQLite database. No `apps/web/.env` is needed.
 
 Keyboard on the board: `j` `k` move, `v` vote, `enter` open, `/` search,
 `c` new post.
@@ -144,7 +157,7 @@ Bug reports and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md
 for local setup and the checks a PR needs to pass. Security issues go to the
 contact in [SECURITY.md](SECURITY.md), not the issue tracker.
 
-Built in the open for [The Build Games](https://canivibecodeit.com/thebuildgames),
+The original OpenHeard project was built in the open for [The Build Games](https://canivibecodeit.com/thebuildgames),
 September 2026.
 
 ## License

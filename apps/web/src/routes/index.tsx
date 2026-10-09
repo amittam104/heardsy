@@ -33,13 +33,14 @@ export const Route = createFileRoute("/")({
     if (parent.loaderData?.marketing) return { posts: [], total: 0, marketing: true as const };
     const data = await listPosts({ data: { ...deps, sort: deps.sort ?? "trending", limit: 30 } });
     if (data.total === 0 && !deps.q && !deps.board && !deps.status) {
+      // The schema default name means setup never ran; any chosen name, Heardsy included, is final.
       if (parent.loaderData?.user?.role === "admin" && parent.loaderData?.workspace.name === "openheard") throw redirect({ to: "/welcome" });
     }
     return { ...data, marketing: false as const };
   },
   head: ({ loaderData }) => {
     if (!loaderData?.marketing) return {};
-    const title = "openheard · the open source Canny alternative";
+    const title = "Heardsy · open source feedback";
     const description =
       "Collect feedback, let users vote, ship a public roadmap and changelog. Self-host in one command or use the cloud. Works with Claude, Cursor and any MCP agent.";
     return {

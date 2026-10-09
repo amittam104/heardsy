@@ -300,8 +300,8 @@ function Widget() {
         {ws.poweredBy || token ? (
           <footer className="relative flex h-11 shrink-0 items-center justify-center border-t px-4 text-xs text-faint">
             {ws.poweredBy ? (
-              <a href="https://openheard.com" target="_blank" rel="noopener" className="transition-colors hover:text-muted-foreground">
-                Powered by <span className="text-foreground">openheard</span>
+              <a href={root.links.source} target="_blank" rel="noopener" className="transition-colors hover:text-muted-foreground">
+                Powered by <span className="text-foreground">Heardsy</span>
               </a>
             ) : null}
             {token && me ? (

@@ -13,7 +13,7 @@ import { BorderBeam } from "./magic/border-beam";
 import { AnimatedSpan, Terminal, TypingAnimation } from "./magic/terminal";
 import { Framed, SectionHeader } from "./shared";
 
-export const GITHUB = "https://github.com/Heilonng23/openheard";
+export const GITHUB = "https://github.com/amittam104/heardsy";
 
 const links = [
   { href: "#product", label: "Product" },
@@ -51,7 +51,7 @@ export function Nav() {
           <div className="flex h-[56px] items-center justify-between p-4">
             <Link to="/" className="flex items-center gap-2.5 text-[15px] font-semibold tracking-[-0.01em] text-foreground">
               <Logo size={22} />
-              openheard
+              Heardsy
             </Link>
             <nav className="hidden items-center gap-1 md:flex">
               {links.map((n) => (
@@ -81,7 +81,7 @@ export function Nav() {
                 <div className="flex items-center justify-between">
                   <Link to="/" className="flex items-center gap-2.5 text-[15px] font-semibold">
                     <Logo size={26} />
-                    openheard
+                    Heardsy
                   </Link>
                   <button type="button" onClick={() => setDrawerOpen(false)} className="cursor-pointer rounded-md border border-border p-1" aria-label="Close menu">
                     <XIcon className="size-5" />
@@ -179,7 +179,7 @@ export function Hero() {
           </div>
           <picture>
             <source srcSet="/landing/board.webp" type="image/webp" />
-            <img src="/landing/board.png" alt="The openheard public board: a list of feature requests with vote counts" width={1920} height={1080} className="block aspect-[4/3] w-full object-cover object-top sm:aspect-[1920/1000]" fetchPriority="high" />
+            <img src="/landing/board.png" alt="The OpenHeard public board (upstream screenshot): a list of feature requests with vote counts" width={1920} height={1080} className="block aspect-[4/3] w-full object-cover object-top sm:aspect-[1920/1000]" fetchPriority="high" />
           </picture>
           <BorderBeam size={260} duration={10} colorFrom="#6e8bff" colorTo="#6e8bff00" />
         </div>

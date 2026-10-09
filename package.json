@@ -1,15 +1,15 @@
 {
-  "name": "openheard",
+  "name": "heardsy",
   "private": true,
-  "description": "Open source feedback board that looks like a 2026 product — board, roadmap, changelog. One Cloudflare Worker + D1, deploys free.",
+  "description": "Heardsy: an open-source feedback board, roadmap, changelog and embeddable widget, forked from OpenHeard.",
   "license": "AGPL-3.0",
-  "homepage": "https://openheard.com",
+  "homepage": "https://github.com/amittam104/heardsy",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Heilonng23/openheard.git"
+    "url": "git+https://github.com/amittam104/heardsy.git"
   },
   "bugs": {
-    "url": "https://github.com/Heilonng23/openheard/issues"
+    "url": "https://github.com/amittam104/heardsy/issues"
   },
   "keywords": [
     "feedback",

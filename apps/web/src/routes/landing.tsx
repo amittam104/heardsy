@@ -6,7 +6,7 @@ import { Landing } from "@/components/landing/page";
 // domain, see __root.tsx.
 export const Route = createFileRoute("/landing")({
   head: () => {
-    const title = "openheard · the open source Canny alternative";
+    const title = "Heardsy · the open source Canny alternative";
     const description =
       "Collect feedback, let users vote, ship a public roadmap and changelog. Self-host in one command or use the cloud. Works with Claude, Cursor and any MCP agent.";
     return {
