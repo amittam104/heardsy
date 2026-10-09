@@ -8,7 +8,7 @@ import { drizzle } from "drizzle-orm/libsql";
 
 import { resetDemoWorkspace } from "../lib/demo-db";
 
-config({ path: new URL("../../.env", import.meta.url).pathname });
+config({ path: new URL("../../../../packages/infra/.env", import.meta.url).pathname });
 
 const db = drizzle(createClient({ url: process.env.DATABASE_URL ?? "file:./local.db" }), { schema }) as unknown as Db;
 

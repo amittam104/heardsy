@@ -16,7 +16,7 @@ export function SignInDialog() {
     replayPendingAction(router);
   }, [root.user, router]);
 
-  const wsName = root.workspace?.name ?? "openheard";
+  const wsName = root.workspace?.name ?? "Heardsy";
   const hasGoogle = root.googleSignIn;
   const callbackURL = typeof window !== "undefined" ? window.location.pathname : "/";
 

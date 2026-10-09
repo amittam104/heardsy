@@ -5,7 +5,7 @@
 ```bash
 bun install
 bun run db:push:local   # creates apps/web/local.db
-bun run dev:local       # http://localhost:3001
+bun run dev:local       # http://localhost:3003
 ```
 
 Sign up once (the first account becomes admin), then `bun run db:seed` for

@@ -7,7 +7,7 @@ import * as schema from "@openheard/db/schema/index";
 import { config } from "dotenv";
 import { drizzle } from "drizzle-orm/libsql";
 
-if (typeof window === "undefined") config({ path: new URL("../../../apps/web/.env", import.meta.url).pathname });
+if (typeof window === "undefined") config({ path: new URL("../../infra/.env", import.meta.url).pathname });
 
 const url = process.env.DATABASE_URL ?? "file:./local.db";
 
@@ -97,8 +97,8 @@ export const env = {
   UPLOADS: typeof window === "undefined" ? localBucket() : undefined,
   UPLOAD_USER_LIMIT: localLimiter(10, 60),
   UPLOAD_IP_LIMIT: localLimiter(30, 60),
-  BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? "http://localhost:3001",
-  // Workspaces live on subdomains of this. *.localhost resolves to loopback in every browser.
-  ROOT_DOMAIN: process.env.ROOT_DOMAIN ?? "localhost",
-  BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? "dev-secret-change-me-please-32chars",
+  BETTER_AUTH_URL: "http://localhost:3003",
+  // Local development uses a single board, independent of the production domain.
+  ROOT_DOMAIN: "",
+  BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET || "dev-secret-change-me-please-32chars",
 } as unknown as Env & { DB_LOCAL: ReturnType<typeof drizzle> };

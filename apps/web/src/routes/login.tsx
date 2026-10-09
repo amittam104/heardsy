@@ -36,7 +36,7 @@ function LoginPage() {
   const search = Route.useSearch();
   const memberCount = Route.useLoaderData();
 
-  const wsName = root.workspace?.name ?? "openheard";
+  const wsName = root.workspace?.name ?? "Heardsy";
   const hasGoogle = root.googleSignIn;
   const callbackURL = search.redirect ?? (root.marketing ? "/new" : "/");
 

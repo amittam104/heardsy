@@ -65,7 +65,7 @@ List posts. Returns `{ posts, total, limit, offset }`.
 
 ```bash
 curl -H "Authorization: Bearer $KEY" \
-  "http://localhost:3001/api/v1/posts?sort=top&limit=5"
+  "http://localhost:3003/api/v1/posts?sort=top&limit=5"
 ```
 
 ### GET /api/v1/posts/:id
@@ -74,7 +74,7 @@ Single post with comments and activity timeline.
 
 ```bash
 curl -H "Authorization: Bearer $KEY" \
-  http://localhost:3001/api/v1/posts/1
+  http://localhost:3003/api/v1/posts/1
 ```
 
 The post and each comment carry `attachments`, the images attached to them,
@@ -183,15 +183,15 @@ One published article with its markdown `body`, `collection`, `related` articles
 export KEY="oh_..."
 
 # List top posts
-curl -s -H "Authorization: Bearer $KEY" http://localhost:3001/api/v1/posts?sort=top | jq
+curl -s -H "Authorization: Bearer $KEY" http://localhost:3003/api/v1/posts?sort=top | jq
 
 # Create a post
 curl -s -X POST -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
   -d '{"title":"API test post","board":"features"}' \
-  http://localhost:3001/api/v1/posts | jq
+  http://localhost:3003/api/v1/posts | jq
 
 # Change status
 curl -s -X POST -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" \
   -d '{"status":"planned"}' \
-  http://localhost:3001/api/v1/posts/1/status | jq
+  http://localhost:3003/api/v1/posts/1/status | jq
 ```

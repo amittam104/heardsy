@@ -26,7 +26,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: ({ loaderData, matches }) => {
     // The widget runs inside other people's apps; it never loads our analytics.
     const embedded = matches.some((m) => (m.routeId as string) === "/widget");
-    const title = loaderData ? `${loaderData.workspace.name} · feedback` : "openheard";
+    const title = loaderData ? `${loaderData.workspace.name} · feedback` : "Heardsy";
     const description = loaderData?.workspace.tagline ?? "Open source feedback board.";
     // A self-hoster's own share image; its size is theirs to know, so no hints.
     const ogImage = loaderData?.ogImage;
@@ -38,7 +38,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
         { title },
         { name: "description", content: description },
         { property: "og:type", content: "website" },
-        { property: "og:site_name", content: loaderData?.workspace.name ?? "openheard" },
+        { property: "og:site_name", content: loaderData?.workspace.name ?? "Heardsy" },
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         ...(ogImage
@@ -92,7 +92,7 @@ function NoBoard({ missingWorkspace, rootDomain, signedIn }: MissingWorkspace) {
   const home = `https://${rootDomain ?? "openheard.com"}`;
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-24 text-center">
-      <a href={home} aria-label="openheard home" className="mb-3">
+      <a href={home} aria-label="Heardsy home" className="mb-3">
         <Logo size={32} />
       </a>
       <h1 className="text-xl font-semibold">There is no board here yet</h1>

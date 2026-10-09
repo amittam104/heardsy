@@ -5,7 +5,6 @@ import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 
 config({ path: "./.env" });
-config({ path: "../../apps/web/.env" });
 
 export const db = Cloudflare.D1.Database("database", {
   // flat .sql copies; drizzle-kit's own out dir (src/migrations) has meta/ which Alchemy rejects
@@ -14,7 +13,7 @@ export const db = Cloudflare.D1.Database("database", {
 
 export const cache = Cloudflare.KV.Namespace("CACHE");
 
-export const email = Cloudflare.Email.SendEmail("EMAIL");
+export const email = process.env.EMAIL_FROM?.trim() ? Cloudflare.Email.SendEmail("EMAIL") : undefined;
 
 // Images attached to posts and comments. Private: the Worker serves them.
 export const uploads = Cloudflare.R2.Bucket("UPLOADS");
@@ -24,6 +23,8 @@ export const uploadUserLimit = Cloudflare.RateLimit("UPLOAD_USER_LIMIT", { names
 export const uploadIpLimit = Cloudflare.RateLimit("UPLOAD_IP_LIMIT", { namespaceId: 1102, simple: { limit: 30, period: 60 } });
 
 export const web = Cloudflare.Website.Vite("web", {
+  // Sets the workers.dev address: <name>.<account subdomain>.workers.dev. Blank derives one from the stack and stage.
+  name: process.env.WORKER_NAME?.trim() || undefined,
   rootDir: "../../apps/web",
   placement: { region: "aws:us-west-2" },
   compatibility: {
@@ -34,7 +35,7 @@ export const web = Cloudflare.Website.Vite("web", {
   env: {
     DB: db,
     CACHE: cache,
-    EMAIL: email,
+    ...(email ? { EMAIL: email } : {}),
     UPLOADS: uploads,
     UPLOAD_USER_LIMIT: uploadUserLimit,
     UPLOAD_IP_LIMIT: uploadIpLimit,
@@ -63,7 +64,7 @@ export const web = Cloudflare.Website.Vite("web", {
     OPENPANEL_URL: Config.string("OPENPANEL_URL").pipe(Config.withDefault("")),
   },
   dev: {
-    port: 3001,
+    port: 3003,
   },
 });
 

@@ -15,7 +15,7 @@ export const Route = createFileRoute("/welcome")({
     if (root.marketing) throw redirect({ to: "/new" });
     if (!isAdmin(root.user)) throw redirect({ to: "/login" });
   },
-  head: () => ({ meta: [{ title: "Welcome · openheard" }] }),
+  head: () => ({ meta: [{ title: "Welcome · Heardsy" }] }),
   component: Welcome,
 });
 

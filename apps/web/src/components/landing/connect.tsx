@@ -19,7 +19,7 @@ export function Connect() {
         <Cell title="Emails when an idea moves" desc="Verified accounts that voted, commented or posted hear when the idea changes status and when it ships. Every email has a one-click unsubscribe.">
           <Email />
         </Cell>
-        <Cell title="Your brand, from your website" desc="Paste your homepage. openheard reads its logo, name, colours and font, and applies the ones you tick.">
+        <Cell title="Your brand, from your website" desc="Paste your homepage. Heardsy reads its logo, name, colours and font, and applies the ones you tick.">
           <Brand />
         </Cell>
       </div>
@@ -57,7 +57,7 @@ function Alert() {
           <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary text-[13px] font-semibold">o</span>
           <div className="min-w-0">
             <div className="flex items-baseline gap-2 text-[13px]">
-              <span className="font-semibold">openheard</span>
+              <span className="font-semibold">Heardsy</span>
               <span className="text-[11px] text-faint tabular-nums">10:42</span>
             </div>
             <p className="mt-1 text-[14px] font-medium text-link">Dark mode for the embedded widget</p>

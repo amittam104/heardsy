@@ -42,7 +42,7 @@ export const startCheckout = createServerFn({ method: "POST" })
       customer = c.id;
       await db.update(user).set({ stripeCustomerId: customer }).where(eq(user.id, u.id));
     }
-    const base = (await billingEnv()).BETTER_AUTH_URL || "http://localhost:3001";
+    const base = (await billingEnv()).BETTER_AUTH_URL || "http://localhost:3003";
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer,
@@ -70,7 +70,7 @@ export const openPortal = createServerFn({ method: "POST" })
     const db = createDb();
     const [row] = await db.select({ customer: user.stripeCustomerId }).from(user).where(eq(user.id, u.id)).limit(1);
     if (!row?.customer) throw new Error("No billing account yet");
-    const base = (await billingEnv()).BETTER_AUTH_URL || "http://localhost:3001";
+    const base = (await billingEnv()).BETTER_AUTH_URL || "http://localhost:3003";
     const session = await stripe.billingPortal.sessions.create({ customer: row.customer, return_url: `${base}/dashboard/settings/billing` });
     return { url: session.url };
   });

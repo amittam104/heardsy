@@ -186,7 +186,7 @@ export function Loop() {
           <Eyebrow>The loop</Eyebrow>
           <h2 className="max-w-[20ch] text-3xl font-medium tracking-tighter text-balance md:text-4xl">Feedback tools go quiet after collection.</h2>
           <div className="flex max-w-[60ch] flex-col gap-4 leading-relaxed text-pretty text-muted-foreground">
-            <p>A user writes an idea, it lands in a dashboard, and that is the last they hear. openheard treats every post as the start of a loop, not the end of one.</p>
+            <p>A user writes an idea, it lands in a dashboard, and that is the last they hear. Heardsy treats every post as the start of a loop, not the end of one.</p>
             <p>Post, vote or comment and you follow the request. When it moves to Planned, you get an email. When it ships, you get the changelog entry that says so, with your request linked. One click unsubscribes.</p>
             <p>Status emails are on by default for verified accounts. Turn the board on and the loop runs the same day.</p>
           </div>
@@ -430,7 +430,7 @@ export function Footer() {
         <div className="mx-0 flex max-w-xs flex-col items-start justify-start gap-y-5">
           <Link to="/" className="flex items-center gap-2.5 text-xl font-semibold">
             <Logo size={30} />
-            openheard
+            Heardsy
           </Link>
           <p className="font-medium tracking-tight text-muted-foreground">Open source feedback board. Post, vote, roadmap, changelog. Self-host or cloud.</p>
           <p className="text-[12px] text-muted-foreground">AGPL-3.0 · © {new Date().getFullYear()} openheard</p>
