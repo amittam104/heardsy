@@ -7,8 +7,12 @@ import { defineConfig } from "vite";
 const local = process.env.OPENHEARD_LOCAL === "1";
 
 export default defineConfig({
+  // One env file for the whole app; only VITE_ variables reach the browser.
+  envDir: fileURLToPath(new URL("../../packages/infra", import.meta.url)),
   server: {
-    port: 3001,
+    host: "localhost",
+    port: 3003,
+    strictPort: true,
   },
   build: {
     modulePreload: { polyfill: false },

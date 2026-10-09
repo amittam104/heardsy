@@ -72,7 +72,7 @@ Restart Claude Desktop after saving.
 # --account <email>: a key for all that person's workspaces. Without it the key is limited to --workspace <slug> (default "default")
 OPENHEARD_LOCAL=1 bun run apps/web/src/scripts/make-api-key.ts --account you@example.com
 
-claude mcp add --transport http openheard-local http://localhost:3001/api/mcp \
+claude mcp add --transport http openheard-local http://localhost:3003/api/mcp \
   --header "Authorization: Bearer oh_your_key_here"
 ```
 

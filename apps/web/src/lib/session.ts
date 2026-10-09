@@ -13,8 +13,8 @@ export type MissingWorkspace = { missingWorkspace: string; rootDomain: string | 
 
 // Which workspace is this request for?
 // Cloud: acme.openheard.com -> "acme" (ROOT_DOMAIN=openheard.com). Local dev
-// works the same way with acme.localhost:3001. Anything else, including a
-// self-hosted custom domain, is the "default" workspace.
+// has no ROOT_DOMAIN, so it serves "default" unless ?ws=<slug> picks another.
+// Anything else, including a self-hosted custom domain, is "default" too.
 export async function rootDomain(): Promise<string | null> {
   // Dynamic import keeps the server env (and dotenv) out of the client bundle,
   // since middleware objects are shipped to the browser.

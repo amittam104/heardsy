@@ -219,7 +219,7 @@ export async function createInvite(ctx: OpCtx, data: { email: string; role: "adm
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   await ctx.db.insert(invite).values({ workspaceId: ctx.workspace.id, email, role: data.role, token, expiresAt });
   const [{ env }, { sendInviteEmail }] = await Promise.all([import("@openheard/env/server"), import("@/lib/email")]);
-  const baseUrl = env.BETTER_AUTH_URL || "http://localhost:3001";
+  const baseUrl = env.BETTER_AUTH_URL || "http://localhost:3003";
   await sendInviteEmail(email, ctx.actor?.name ?? ctx.workspace.name, ctx.workspace.name, `${baseUrl}/join/${token}`);
   return { invited: email, role: data.role, expiresAt };
 }
