@@ -42,7 +42,7 @@ export const DAILY_UPLOAD_BYTES = 100 * 1024 * 1024;
 const DAY = 24 * 60 * 60 * 1000;
 
 // D1 refuses a query with more than 100 bound parameters.
-const D1_CHUNK = 90;
+export const D1_CHUNK = 90;
 
 // Reads at most `max` bytes, so a client that lies about (or omits) its
 // content-length still cannot make the Worker buffer more than that.

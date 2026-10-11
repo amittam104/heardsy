@@ -386,7 +386,7 @@ function Preview({ origin, workspaceId, settings, logoUrl }: { origin: string; w
   );
   if (!origin) return <div>{head}<div className="h-[720px] rounded-xl border bg-card" /></div>;
   const line = (w: number) => `<div style="height:10px;width:${w}%;border-radius:5px;background:#e6e4de;margin:0 0 12px"></div>`;
-  const json = (v: unknown) => JSON.stringify(v).replace(/</g, "\u003c");
+  const json = (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c");
   const doc = `<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;font:14px system-ui,sans-serif;background:#f7f5f0}header{height:48px;border-bottom:1px solid #e6e4de;display:flex;align-items:center;padding:0 20px}main{padding:28px 20px}</style></head><body><header>${line(12).replace("margin:0 0 12px", "margin:0")}</header><main>${line(60)}${line(90)}${line(80)}</main><script>window.heardsyPrivate=function(){(window.heardsyPrivate.q=window.heardsyPrivate.q||[]).push(arguments)};window.heardsyPrivate("config",${json(first.current)})</script><script src="${origin}/private-widget.js" data-workspace="${workspaceId.replace(/[^a-z0-9-]/g, "")}" data-preview="true" data-open-on-load async></script></body></html>`;
   return (
     <div className="@min-[1000px]:sticky @min-[1000px]:top-0">

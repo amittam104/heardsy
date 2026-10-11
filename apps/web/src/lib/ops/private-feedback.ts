@@ -1,7 +1,7 @@
 import { membership, privateFeedback, privateFeedbackActivity, user } from "@openheard/db";
 import { and, asc, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 
-import { objectKey, uploadsBucket } from "@/lib/attachment-db";
+import { D1_CHUNK, objectKey, uploadsBucket } from "@/lib/attachment-db";
 import { privateImagePath } from "@/lib/private-feedback";
 
 import { type OpCtx, OpError, needActor } from "./context";
@@ -64,7 +64,8 @@ export async function getPrivateFeedback(ctx: OpCtx, id: string) {
   });
   // Assignment history names people by id; show their names.
   const ids = [...new Set(activity.flatMap((a) => (a.type === "assign" ? [a.fromValue, a.toValue] : [])).filter((v): v is string => !!v))];
-  const people = ids.length ? await db.select({ id: user.id, name: user.name }).from(user).where(inArray(user.id, ids)) : [];
+  const people = [];
+  for (let i = 0; i < ids.length; i += D1_CHUNK) people.push(...(await db.select({ id: user.id, name: user.name }).from(user).where(inArray(user.id, ids.slice(i, i + D1_CHUNK)))));
   const names = Object.fromEntries(people.map((p) => [p.id, p.name]));
   return {
     id: report.id,

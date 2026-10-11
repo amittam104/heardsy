@@ -307,7 +307,6 @@
     busy = false;
     contact = null;
     metadata = null;
-    canSubmit = true;
     post({ type: "heardsy-private:reset" });
     sync();
   }

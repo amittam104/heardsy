@@ -79,7 +79,8 @@ the page URL or other diagnostics on its own.
 ### `canSubmit`
 
 `false` keeps the form open and the draft intact but disables Send with "Sign
-in again to send". `true` (the default) turns it back on.
+in again to send". `true` (the default) turns it back on. `reset` keeps the
+current value, so only `config` changes it.
 
 ## Apps that require sign-in
 

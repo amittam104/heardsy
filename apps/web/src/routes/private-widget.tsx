@@ -114,7 +114,6 @@ function PrivateWidget() {
         edited.current = { name: false, email: false };
         contactRef.current = null;
         setMetadata(null);
-        setCanSubmit(true);
         setError(null);
         setState("idle");
         setDraft((d) => {

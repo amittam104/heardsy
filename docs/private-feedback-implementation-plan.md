@@ -242,7 +242,7 @@ Adapts the public loader's shell, launcher, open/close/toggle, `data-*-open` tri
   | --- | --- |
   | `open` / `close` / `toggle` | As the public widget. |
   | `config({ contact: { name, email }, metadata, canSubmit, appearance })` | Prefill fills only fields not edited since the last reset. `metadata` must be a plain object whose JSON is ≤8 KiB, else dropped with a warning. `canSubmit: false` pauses Send with "Sign in again to send" and keeps the draft; `true` resumes; default `true`. |
-  | `reset()` | Clears draft, images, contact, metadata, and edited flags in frame and loader. Apps call `reset()` then `config(...)` on logout or account switch. |
+  | `reset()` | Clears draft, images, contact, metadata, and edited flags in frame and loader; keeps `canSubmit` as last configured. Apps call `reset()` then `config(...)` on logout or account switch. |
 
 ### Phase 4 acceptance
 

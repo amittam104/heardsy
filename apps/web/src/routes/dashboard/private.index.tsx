@@ -3,7 +3,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { cn } from "@openheard/ui/lib/utils";
 import { CaretDownIcon, FunnelSimpleIcon, ImageIcon, LockSimpleIcon, XIcon } from "@phosphor-icons/react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { Panel } from "@/components/admin/panel";
@@ -44,22 +44,28 @@ function PrivateInbox() {
   const [next, setNext] = useState(page.next);
   const [loading, setLoading] = useState(false);
   const [q, setQ] = useState("");
+  const request = useRef(0);
   useEffect(() => {
+    request.current++;
     setRows(page.items);
     setNext(page.next);
+    setLoading(false);
   }, [page]);
+  useEffect(() => () => void request.current++, []);
 
   async function more() {
     if (!next) return;
+    const id = ++request.current;
     setLoading(true);
     try {
       const res = await listPrivateFeedback({ data: { ...search, cursor: next } });
+      if (id !== request.current) return;
       setRows((r) => [...r, ...res.items]);
       setNext(res.next);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not load more");
+      if (id === request.current) toast.error(err instanceof Error ? err.message : "Could not load more");
     } finally {
-      setLoading(false);
+      if (id === request.current) setLoading(false);
     }
   }
 
