@@ -1,8 +1,8 @@
 // Storing, claiming and deleting image attachments. Server only: it pulls in
 // the database and the R2 binding, so routes reach it through a dynamic import.
-import { attachment, workspace, type Db } from "@openheard/db";
+import { attachment, privateWidget, workspace, type Db } from "@openheard/db";
 import { env } from "@openheard/env/server";
-import { and, eq, inArray, isNull, like, lt, sql, type SQL } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, like, lt, sql, type SQL } from "drizzle-orm";
 
 import { MAX_IMAGE_BYTES, MAX_IMAGES, formatBytes, imageSize, sniffImageType, toAttachmentView } from "./attachments";
 
@@ -20,7 +20,7 @@ export function uploadsBucket(): UploadsBucket | null {
 }
 
 // Random, URL-safe, 128 bits: an id nobody guesses.
-function newId() {
+export function newId() {
   const b = crypto.getRandomValues(new Uint8Array(16));
   return btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
@@ -43,6 +43,32 @@ const DAY = 24 * 60 * 60 * 1000;
 
 // D1 refuses a query with more than 100 bound parameters.
 const D1_CHUNK = 90;
+
+// Reads at most `max` bytes, so a client that lies about (or omits) its
+// content-length still cannot make the Worker buffer more than that.
+export async function readCapped(request: Request, max: number): Promise<Uint8Array | null> {
+  if (!request.body) return new Uint8Array();
+  const reader = request.body.getReader();
+  const parts: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > max) {
+      await reader.cancel();
+      return null;
+    }
+    parts.push(value);
+  }
+  const out = new Uint8Array(total);
+  let at = 0;
+  for (const p of parts) {
+    out.set(p, at);
+    at += p.byteLength;
+  }
+  return out;
+}
 
 // Checks the bytes, not the claimed type, then writes an unclaimed row and the
 // object. The post or comment it was pasted into claims it on publish.
@@ -130,12 +156,16 @@ export function sweepUnclaimed(db: Db, olderThan = DAY) {
 // away in the database, which cannot reach into the bucket, so the nightly
 // run deletes what is left behind. Fresh objects are skipped: their row may
 // be a moment behind the write. A workspace's current logo lives in the
-// same bucket with no attachment row, so it counts as known too.
+// same bucket with no attachment row, so it counts as known too, as do
+// private feedback screenshots and each private widget's current logo.
 export async function sweepOrphans(db: Db, olderThan = DAY) {
   const bucket = uploadsBucket();
   if (!bucket) return 0;
-  const logos = await db.select({ id: workspace.id, logoUrl: workspace.logoUrl }).from(workspace).where(like(workspace.logoUrl, "/logo/%"));
-  const logoKeys = new Set(logos.map((w) => objectKey(w.id, w.logoUrl!.slice("/logo/".length))));
+  const [logos, privateLogos] = await Promise.all([
+    db.select({ id: workspace.id, logoUrl: workspace.logoUrl }).from(workspace).where(like(workspace.logoUrl, "/logo/%")),
+    db.select({ id: privateWidget.workspaceId, logoId: privateWidget.logoId }).from(privateWidget).where(isNotNull(privateWidget.logoId)),
+  ]);
+  const logoKeys = new Set([...logos.map((w) => objectKey(w.id, w.logoUrl!.slice("/logo/".length))), ...privateLogos.map((w) => objectKey(w.id, w.logoId!))]);
   const cutoff = Date.now() - olderThan;
   let cursor: string | undefined;
   let removed = 0;
@@ -148,6 +178,9 @@ export async function sweepOrphans(db: Db, olderThan = DAY) {
     for (let i = 0; i < old.length; i += D1_CHUNK) {
       const keys = old.slice(i, i + D1_CHUNK).map((o) => o.key);
       for (const r of await db.select({ key: attachment.key }).from(attachment).where(inArray(attachment.key, keys))) known.add(r.key);
+      const reportKey = sql`pf.workspace_id || '/' || json_extract(j.value, '$.id')`;
+      const images = await db.all<{ key: string }>(sql`SELECT ${reportKey} AS key FROM private_feedback pf, json_each(pf.images) j WHERE ${reportKey} IN ${keys}`);
+      for (const r of images) known.add(r.key);
     }
     const gone = old.map((o) => o.key).filter((k) => !known.has(k) && !logoKeys.has(k));
     if (gone.length) await bucket.delete(gone);

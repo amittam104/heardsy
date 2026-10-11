@@ -6,13 +6,17 @@ import { AdminRail, AdminSidebar } from "@/components/admin/sidebar";
 import { NewPostDialog } from "@/components/new-post-dialog";
 import { DashboardErrorState, DashboardShellSkeleton } from "@/components/states";
 import { DemoBanner } from "@/components/demo-banner";
+import { teammateAllowed } from "@/lib/admin-nav";
 import { isDemo } from "@/lib/demo";
 
 export const Route = createFileRoute("/dashboard")({
-  loader: async ({ parentMatchPromise }) => {
+  loader: async ({ parentMatchPromise, location }) => {
     const parent = await parentMatchPromise;
-    if (parent.loaderData?.user?.role !== "admin") throw redirect({ to: "/login" });
-    return { demo: isDemo(parent.loaderData?.workspace) };
+    const user = parent.loaderData?.user;
+    if (user?.role !== "admin" && !user?.privateAccess) throw redirect({ to: "/login" });
+    // Granted teammates handle private feedback only; the server refuses the rest anyway.
+    if (user.role !== "admin" && !teammateAllowed(location.pathname)) throw redirect({ to: "/dashboard/private" });
+    return { demo: isDemo(parent.loaderData?.workspace), admin: user.role === "admin" };
   },
   component: AdminLayout,
   pendingComponent: DashboardShellSkeleton,
@@ -24,7 +28,9 @@ export const Route = createFileRoute("/dashboard")({
 function AdminLayout() {
   const root = useLoaderData({ from: "__root__" });
   const router = useRouter();
+  const admin = root.user?.role === "admin";
   useEffect(() => {
+    if (!admin) return;
     const siblings = [
       { to: "/dashboard/inbox" },
       { to: "/dashboard/roadmap" },
@@ -33,7 +39,7 @@ function AdminLayout() {
       { to: "/dashboard/settings/general" },
     ];
     for (const s of siblings) router.preloadRoute(s as unknown as Parameters<typeof router.preloadRoute>[0]);
-  }, [router]);
+  }, [router, admin]);
   const [composing, setComposing] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const openCompose = useCallback(() => setComposing(true), []);
@@ -82,7 +88,7 @@ function AdminLayout() {
         {isDemo(root.workspace) ? <DemoBanner /> : null}
         <Outlet />
       </div>
-      <NewPostDialog open={composing} onOpenChange={setComposing} boards={root.boards} signedIn={!!root.user} />
+      {admin ? <NewPostDialog open={composing} onOpenChange={setComposing} boards={root.boards} signedIn={!!root.user} /> : null}
     </div>
   );
 }

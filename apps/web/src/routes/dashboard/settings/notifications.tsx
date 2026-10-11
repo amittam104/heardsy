@@ -50,6 +50,11 @@ function Notifications() {
       <Row label="Something ships" help="Each new changelog entry.">
         <Toggle on={email.changelog} onChange={(v) => setEmail({ ...email, changelog: v })} label="Changelog" />
       </Row>
+      {form.notifyPrivateFeedback !== undefined ? (
+        <Row label="New private feedback" help="A bug or feature request arrives through the private widget. On by default for admins.">
+          <Toggle on={form.notifyPrivateFeedback} onChange={(v) => setForm({ ...form, notifyPrivateFeedback: v })} label="New private feedback" />
+        </Row>
+      ) : null}
       {email.workspaceStatusEmails !== undefined && (
         <>
           <div className="pt-6">

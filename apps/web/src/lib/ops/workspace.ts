@@ -198,26 +198,26 @@ export async function listMembers(ctx: OpCtx) {
   assertNotDemo(ctx.workspace);
   const [members, invites] = await Promise.all([
     ctx.db
-      .select({ id: user.id, name: user.name, email: user.email, image: user.image, role: membership.role, createdAt: membership.createdAt })
+      .select({ id: user.id, name: user.name, email: user.email, image: user.image, role: membership.role, privateAccess: membership.privateAccess, createdAt: membership.createdAt })
       .from(membership)
       .innerJoin(user, eq(user.id, membership.userId))
       .where(eq(membership.workspaceId, ctx.workspace.id))
       .orderBy(membership.createdAt),
     ctx.db
-      .select({ email: invite.email, role: invite.role, expiresAt: invite.expiresAt })
+      .select({ email: invite.email, role: invite.role, privateAccess: invite.privateAccess, expiresAt: invite.expiresAt })
       .from(invite)
       .where(and(eq(invite.workspaceId, ctx.workspace.id), isNull(invite.acceptedAt))),
   ]);
   return { members, pendingInvites: invites };
 }
 
-export async function createInvite(ctx: OpCtx, data: { email: string; role: "admin" | "member" }) {
+export async function createInvite(ctx: OpCtx, data: { email: string; role: "admin" | "member"; privateAccess?: boolean }) {
   assertNotDemo(ctx.workspace);
   const email = data.email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new OpError(`'${data.email}' is not an email address`);
   const token = crypto.randomUUID();
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  await ctx.db.insert(invite).values({ workspaceId: ctx.workspace.id, email, role: data.role, token, expiresAt });
+  await ctx.db.insert(invite).values({ workspaceId: ctx.workspace.id, email, role: data.role, privateAccess: data.privateAccess ?? false, token, expiresAt });
   const [{ env }, { sendInviteEmail }] = await Promise.all([import("@openheard/env/server"), import("@/lib/email")]);
   const baseUrl = env.BETTER_AUTH_URL || "http://localhost:3003";
   await sendInviteEmail(email, ctx.actor?.name ?? ctx.workspace.name, ctx.workspace.name, `${baseUrl}/join/${token}`);

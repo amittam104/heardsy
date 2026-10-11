@@ -1,14 +1,15 @@
 // Who hears about a status change or a changelog entry, and the sending.
 // Server-only: it pulls the database in. Server functions import it inside
 // their handlers.
-import { changelogSubscriber, comment, emailOptout, post, user, vote } from "@openheard/db";
+import { changelogSubscriber, comment, emailOptout, membership, post, user, vote } from "@openheard/db";
 import type { Db, EmailKind } from "@openheard/db";
-import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 
 import { DEMO_ADMIN_ID, isDemo } from "./demo";
 import { type SendResult, sendEmail } from "./email";
 import { type EmailTokenKind, signEmailToken } from "./email-token";
-import { type Rendered, type StatusLabel, type Unsub, changelogEmail, statusChangeEmail } from "./notify-email";
+import { type Rendered, type StatusLabel, type Unsub, changelogEmail, privateFeedbackEmail, statusChangeEmail } from "./notify-email";
+import { privateReportUrl } from "./private-feedback";
 
 export const normalizeEmail = (e: string) => e.trim().toLowerCase();
 
@@ -232,4 +233,43 @@ export async function buildChangelogEmails(input: {
       };
     }),
   );
+}
+
+// Who hears about new private feedback, chosen when it is sent: admins unless
+// they turned it off, and granted teammates who turned it on.
+export async function privateFeedbackRecipients(db: Db, workspaceId: string): Promise<Candidate[]> {
+  const rows = await db
+    .select({ userId: user.id, email: user.email })
+    .from(membership)
+    .innerJoin(user, eq(user.id, membership.userId))
+    .where(
+      and(
+        eq(membership.workspaceId, workspaceId),
+        sql`((${membership.role} = 'admin' AND coalesce(${membership.notifyPrivateFeedback}, 1) = 1) OR (${membership.privateAccess} = 1 AND ${membership.notifyPrivateFeedback} = 1))`,
+      ),
+    )
+    .orderBy(asc(user.id))
+    .limit(CANDIDATE_LIMIT);
+  return capped(pickRecipients(rows, { optedOut: new Set() }), "private-feedback-email");
+}
+
+// The team email for a report that was just saved. Never throws, so the
+// report stands whatever happens to the email.
+export async function sendPrivateFeedbackEmail(
+  db: Db,
+  input: { workspace: { id: string; name: string }; origin: string; report: { id: string; type: "bug" | "feature"; title: string } },
+  send: Sender = sendEmail,
+): Promise<{ sent: number; failed: number; skipped: number }> {
+  const { workspace, origin, report } = input;
+  try {
+    if (isDemo(workspace)) return { sent: 0, failed: 0, skipped: 0 };
+    const { localDev } = await import("./session");
+    const url = privateReportUrl(origin, workspace.id, report.id, await localDev());
+    const recipients = await privateFeedbackRecipients(db, workspace.id);
+    const mail = privateFeedbackEmail({ workspaceName: workspace.name, type: report.type, title: report.title, url });
+    return await deliver(recipients.map((r) => ({ to: r.email, ...mail })), send, "private-feedback-email");
+  } catch (err) {
+    console.error("[private-feedback-email] failed:", err instanceof Error ? err.message : err);
+    return { sent: 0, failed: 1, skipped: 0 };
+  }
 }

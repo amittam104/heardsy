@@ -7,7 +7,7 @@ import { and, eq } from "drizzle-orm";
 import { DEMO_ADMIN_ID, DEMO_WORKSPACE_ID } from "./demo";
 import { WIDGET_TOKEN_HEADER } from "./widget-auth";
 
-export type SessionUser = { id: string; name: string; email: string; role: Role | "guest"; image?: string | null };
+export type SessionUser = { id: string; name: string; email: string; role: Role | "guest"; image?: string | null; privateAccess: boolean };
 export type Workspace = typeof workspace.$inferSelect;
 export type MissingWorkspace = { missingWorkspace: string; rootDomain: string | null; signedIn: boolean };
 
@@ -36,7 +36,7 @@ export function workspaceSlugFromHost(host: string, rootDomainValue: string | nu
 // second workspace. With OPENHEARD_LOCAL=1, `?ws=<slug>` picks one and is
 // remembered in a cookie so server functions on the same origin agree. The
 // cloud never reads either: hosts are the only source of truth there.
-async function localDev(): Promise<boolean> {
+export async function localDev(): Promise<boolean> {
   const { env } = await import("@openheard/env/server");
   return (env as unknown as { OPENHEARD_LOCAL?: string }).OPENHEARD_LOCAL === "1";
 }
@@ -149,13 +149,21 @@ async function resolveSession(request: Request, widget?: string) {
   let user: SessionUser | null = null;
   if (session) {
     const [m] = await db
-      .select({ role: membership.role })
+      .select({ role: membership.role, privateAccess: membership.privateAccess })
       .from(membership)
       .where(and(eq(membership.workspaceId, ws.id), eq(membership.userId, session.user.id)))
       .limit(1);
     const role = m?.role ?? "guest";
     // A widget token reads and posts like a visitor, whatever the account is.
-    user = { id: session.user.id, name: session.user.name, email: session.user.email, role: widget !== undefined && role === "admin" ? "member" : role, image: session.user.image };
+    const viaWidget = widget !== undefined;
+    user = {
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+      role: viaWidget && role === "admin" ? "member" : role,
+      image: session.user.image,
+      privateAccess: !viaWidget && (role === "admin" || !!m?.privateAccess),
+    };
   }
   return { user, workspace: ws, marketing };
 }
@@ -217,3 +225,10 @@ export function requireAdmin(user: SessionUser | null): SessionUser {
 }
 
 export const isAdmin = (user: SessionUser | null) => user?.role === "admin";
+
+// Admins, and teammates an admin granted private feedback access.
+export function requirePrivateAccess(user: SessionUser | null): SessionUser {
+  const u = requireUser(user);
+  if (!u.privateAccess) throw new Error("No access");
+  return u;
+}

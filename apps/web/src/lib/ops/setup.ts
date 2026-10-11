@@ -1,4 +1,4 @@
-import { board, post, status, tag } from "@openheard/db";
+import { board, post, privateFeedback, status, tag } from "@openheard/db";
 import type { StatusKind } from "@openheard/db/schema/feedback";
 import { and, asc, count, eq, sql } from "drizzle-orm";
 
@@ -145,8 +145,19 @@ export async function deleteStatus(ctx: OpCtx, key: string) {
   if (!target) throw new OpError(`Status '${key}' not found; statuses are: ${listOf(all.map((s) => s.key))}`, 404);
   const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(post).where(and(eq(post.workspaceId, ws), eq(post.status, key)));
   if (n > 0) throw new OpError(`${n} ${n === 1 ? "post uses" : "posts use"} this status. Move them first.`);
+  const privateInUse = (count: number) => new OpError(`${count} private ${count === 1 ? "report uses" : "reports use"} this status. Move them first.`);
+  const [{ n: privateCount }] = await db.select({ n: sql<number>`count(*)` }).from(privateFeedback).where(and(eq(privateFeedback.workspaceId, ws), eq(privateFeedback.status, key)));
+  if (privateCount > 0) throw privateInUse(privateCount);
   if ((target.kind === "open" || target.kind === "closed") && all.filter((s) => s.kind === target.kind).length === 1) throw new OpError(`You need at least one "${target.kind}" status`);
-  await db.delete(status).where(and(eq(status.workspaceId, ws), eq(status.key, key)));
+  // A private report can arrive between the count and the delete.
+  const deleted = await db
+    .delete(status)
+    .where(and(eq(status.workspaceId, ws), eq(status.key, key), sql`NOT EXISTS (SELECT 1 FROM private_feedback WHERE workspace_id = ${ws} AND status = ${key})`))
+    .returning({ key: status.key });
+  if (!deleted.length) {
+    const [{ n: arrived }] = await db.select({ n: sql<number>`count(*)` }).from(privateFeedback).where(and(eq(privateFeedback.workspaceId, ws), eq(privateFeedback.status, key)));
+    if (arrived > 0) throw privateInUse(arrived);
+  }
   refresh(ctx);
   return { deleted: key };
 }

@@ -396,7 +396,7 @@ function AllowedSites({ current, locked }: { current: string | null; locked: boo
   );
 }
 
-function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: [T, string, Icon?][] }) {
+export function Segmented<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: [T, string, Icon?][] }) {
   return (
     <div className="inline-flex h-8 items-center gap-0.5 rounded-lg border bg-card p-0.5" role="radiogroup">
       {options.map(([v, label, I]) => (

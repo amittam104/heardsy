@@ -75,6 +75,10 @@ export const membership = sqliteTable(
     notifyNewPost: integer("notify_new_post", { mode: "boolean" }).notNull().default(true),
     notifyComment: integer("notify_comment", { mode: "boolean" }).notNull().default(true),
     notifyStatus: integer("notify_status", { mode: "boolean" }).notNull().default(false),
+    // Explicit grant to read and handle private feedback. Admins always have it.
+    privateAccess: integer("private_access", { mode: "boolean" }).notNull().default(false),
+    // Null follows the role: admins get new private feedback emails, teammates opt in.
+    notifyPrivateFeedback: integer("notify_private_feedback", { mode: "boolean" }),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
   },
   (t) => [primaryKey({ columns: [t.workspaceId, t.userId] }), index("membership_user_idx").on(t.userId)],
@@ -395,6 +399,7 @@ export const invite = sqliteTable(
       .references(() => workspace.id, { onDelete: "cascade" }),
     email: text("email").notNull(),
     role: text("role", { enum: ROLES }).notNull().default("member"),
+    privateAccess: integer("private_access", { mode: "boolean" }).notNull().default(false),
     token: text("token").notNull().unique(),
     expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
     acceptedAt: integer("accepted_at", { mode: "timestamp_ms" }),
@@ -402,6 +407,92 @@ export const invite = sqliteTable(
   },
   (t) => [index("invite_workspace_idx").on(t.workspaceId), index("invite_token_idx").on(t.token)],
 );
+
+export const PRIVATE_FEEDBACK_TYPES = ["bug", "feature"] as const;
+export type PrivateFeedbackType = (typeof PRIVATE_FEEDBACK_TYPES)[number];
+export type PrivateImage = { id: string; contentType: string; size: number; width: number | null; height: number | null };
+
+// Bug reports and feature requests from the Private Feedback Widget. Only the
+// receiving workspace's admins and granted teammates read them; the original
+// submission is never edited. Images live in object storage under
+// `${workspace_id}/${images[].id}`.
+export const privateFeedback = sqliteTable(
+  "private_feedback",
+  {
+    id: text("id").primaryKey(),
+    workspaceId: text("workspace_id")
+      .notNull()
+      .references(() => workspace.id, { onDelete: "cascade" }),
+    submissionId: text("submission_id").notNull(),
+    contentHash: text("content_hash").notNull(),
+    type: text("type", { enum: PRIVATE_FEEDBACK_TYPES }).notNull(),
+    title: text("title").notNull(),
+    message: text("message").notNull(),
+    reporterName: text("reporter_name").notNull(),
+    reporterEmail: text("reporter_email").notNull(),
+    // Canonical JSON supplied by the consuming app, shown to reviewers as data.
+    metadata: text("metadata"),
+    images: text("images", { mode: "json" }).$type<PrivateImage[]>().notNull().default(sql`'[]'`),
+    imagesSize: integer("images_size").notNull().default(0),
+    status: text("status").notNull(),
+    assigneeId: text("assignee_id").references(() => user.id, { onDelete: "set null" }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).default(now).notNull(),
+    statusChangedAt: integer("status_changed_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [
+    uniqueIndex("private_feedback_submission_idx").on(t.workspaceId, t.submissionId),
+    index("private_feedback_created_idx").on(t.workspaceId, t.createdAt, t.id),
+    index("private_feedback_status_idx").on(t.workspaceId, t.status),
+    index("private_feedback_assignee_idx").on(t.assigneeId),
+  ],
+);
+
+// Internal notes plus status and assignment history on private feedback.
+export const privateFeedbackActivity = sqliteTable(
+  "private_feedback_activity",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    feedbackId: text("feedback_id")
+      .notNull()
+      .references(() => privateFeedback.id, { onDelete: "cascade" }),
+    actorId: text("actor_id").references(() => user.id, { onDelete: "set null" }),
+    type: text("type", { enum: ["note", "status", "assign"] }).notNull(),
+    body: text("body"),
+    fromValue: text("from_value"),
+    toValue: text("to_value"),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  },
+  (t) => [index("private_feedback_activity_feedback_idx").on(t.feedbackId)],
+);
+
+// The private widget's appearance, logo and allowed sites. Its own table so
+// none of it rides along with the public workspace row.
+export const privateWidget = sqliteTable("private_widget", {
+  workspaceId: text("workspace_id")
+    .primaryKey()
+    .references(() => workspace.id, { onDelete: "cascade" }),
+  settings: text("settings", { mode: "json" }).$type<Record<string, unknown>>(),
+  origins: text("origins"),
+  logoId: text("logo_id"),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).default(now).notNull(),
+  updatedBy: text("updated_by").references(() => user.id, { onDelete: "set null" }),
+});
+
+export const privateFeedbackRelations = relations(privateFeedback, ({ one, many }) => ({
+  workspace: one(workspace, { fields: [privateFeedback.workspaceId], references: [workspace.id] }),
+  assignee: one(user, { fields: [privateFeedback.assigneeId], references: [user.id] }),
+  activity: many(privateFeedbackActivity),
+}));
+
+export const privateFeedbackActivityRelations = relations(privateFeedbackActivity, ({ one }) => ({
+  feedback: one(privateFeedback, { fields: [privateFeedbackActivity.feedbackId], references: [privateFeedback.id] }),
+  actor: one(user, { fields: [privateFeedbackActivity.actorId], references: [user.id] }),
+}));
+
+export const privateWidgetRelations = relations(privateWidget, ({ one }) => ({
+  workspace: one(workspace, { fields: [privateWidget.workspaceId], references: [workspace.id] }),
+}));
 
 export const inviteRelations = relations(invite, ({ one }) => ({
   workspace: one(workspace, { fields: [invite.workspaceId], references: [workspace.id] }),

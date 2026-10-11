@@ -25,7 +25,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   loader: () => getWorkspace(),
   head: ({ loaderData, matches }) => {
     // The widget runs inside other people's apps; it never loads our analytics.
-    const embedded = matches.some((m) => (m.routeId as string) === "/widget");
+    const embedded = matches.some((m) => (m.routeId as string) === "/widget" || (m.routeId as string) === "/private-widget");
     const title = loaderData ? `${loaderData.workspace.name} · feedback` : "Heardsy";
     const description = loaderData?.workspace.tagline ?? "Open source feedback board.";
     // A self-hoster's own share image; its size is theirs to know, so no hints.
@@ -113,7 +113,7 @@ function NoBoard({ missingWorkspace, rootDomain, signedIn }: MissingWorkspace) {
   );
 }
 
-const BARE_PAGES = ["/login", "/reset-password", "/join/", "/new", "/welcome", "/start", "/widget"];
+const BARE_PAGES = ["/login", "/reset-password", "/join/", "/new", "/welcome", "/start", "/widget", "/private-widget"];
 
 function RootDocument() {
   const data = Route.useLoaderData();
@@ -135,16 +135,17 @@ function RootDocument() {
   const bare = BARE_PAGES.some((p) => pathname === p || pathname.startsWith(p));
   // The embedded widget takes its theme from the loader, which settles "auto"
   // against the visitor's system; dark when it does not say.
-  const widget = pathname.startsWith("/widget");
+  const widget = pathname.startsWith("/widget") || pathname === "/private-widget";
   const widgetTheme = useRouterState({ select: (s) => ((s.resolvedLocation ?? s.location).search as { theme?: string }).theme });
   // Public pages follow the visitor's saved light / dark / auto choice, or
   // the workspace theme when they have not picked one.
   const visitorPage = !widget && !admin && !marketing;
   const workspaceTheme = data?.workspace.theme === "light" ? "light" : "dark";
   const visitor = useVisitorTheme(data?.workspace.id ?? "", workspaceTheme, visitorPage && !!data);
-  const theme = widget ? (pathname === "/widget" && widgetTheme === "light" ? "" : "dark") : visitorPage ? (visitor.dark ? "dark" : "") : "dark";
+  const theme = widget ? ((pathname === "/widget" || pathname === "/private-widget") && widgetTheme === "light" ? "" : "dark") : visitorPage ? (visitor.dark ? "dark" : "") : "dark";
   // Workspace accent applies to the public board only; the dashboard keeps ours.
-  const accentColor = !admin ? data?.workspace.accent : null;
+  // The private frame takes its accent from its own receiver's config instead.
+  const accentColor = !admin && pathname !== "/private-widget" ? data?.workspace.accent : null;
   const accent = accentColor
     ? ({ "--link": accentColor, "--ring": accentColor, "--link-foreground": brandForeground(accentColor) } as React.CSSProperties)
     : undefined;

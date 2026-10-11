@@ -4,9 +4,9 @@ import { CaretDownIcon, EnvelopeSimpleIcon, TrashSimpleIcon, XIcon } from "@phos
 import { createFileRoute, useLoaderData, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 
-import { SectionHead } from "@/components/admin/panel";
+import { SectionHead, Toggle } from "@/components/admin/panel";
 import { Avatar } from "@/components/bits";
-import { listMembers, setRole } from "@/functions/admin";
+import { listMembers, setPrivateAccess, setRole } from "@/functions/admin";
 import { createInvite, listInvites, removeMember, revokeInvite } from "@/functions/invites";
 import { since } from "@/lib/time";
 import { PageHead } from "@/routes/dashboard/settings";
@@ -28,14 +28,16 @@ function Team() {
   const admins = members.filter((m) => m.role === "admin").length;
 
   const [inviteEmail, setInviteEmail] = useState("");
+  const [invitePrivate, setInvitePrivate] = useState(false);
   const [inviteBusy, setInviteBusy] = useState(false);
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
     setInviteBusy(true);
     try {
-      await createInvite({ data: { email: inviteEmail } });
+      await createInvite({ data: { email: inviteEmail, privateAccess: invitePrivate } });
       setInviteEmail("");
+      setInvitePrivate(false);
       toast.success(`Invite sent to ${inviteEmail}`);
       router.invalidate();
     } catch (err: any) {
@@ -46,8 +48,8 @@ function Team() {
 
   return (
     <>
-      <PageHead title="Team" sub="Admins run the board and see internal notes. Members are everyone else who signed up." />
-      <form className="flex items-center gap-2 rounded-lg border bg-card py-2.5 pr-2.5 pl-3.5" onSubmit={handleInvite}>
+      <PageHead title="Team" sub="Admins run the board and see internal notes. Members are everyone else who signed up. Private feedback is for admins and the members you grant it to." />
+      <form className="flex flex-wrap items-center gap-2 rounded-lg border bg-card py-2.5 pr-2.5 pl-3.5" onSubmit={handleInvite}>
         <EnvelopeSimpleIcon className="size-3.5 text-faint" />
         <input
           type="email"
@@ -57,6 +59,10 @@ function Team() {
           placeholder="teammate@company.com"
           className="min-w-0 flex-1 bg-transparent text-[13px] outline-none placeholder:text-faint"
         />
+        <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+          <Toggle on={invitePrivate} onChange={setInvitePrivate} label="Private feedback access" />
+          Private feedback
+        </label>
         <Button size="sm" arrow type="submit" disabled={inviteBusy}>
           {inviteBusy ? "Sending…" : "Send invite"}
         </Button>
@@ -70,6 +76,7 @@ function Team() {
               <EnvelopeSimpleIcon className="size-3.5 text-faint" />
               <span className="min-w-0 flex-1 truncate text-[13px]">{inv.email}</span>
               <span className="text-xs capitalize text-faint">{inv.role}</span>
+              {inv.privateAccess ? <span className="text-xs text-faint">private feedback</span> : null}
               <span className="text-xs text-faint">{since(inv.createdAt)}</span>
               <button
                 type="button"
@@ -104,6 +111,20 @@ function Team() {
               <span className="text-xs text-faint">{m.email}</span>
             </div>
             <span className="text-xs text-faint">joined {since(m.createdAt)}</span>
+            <span className="inline-flex items-center gap-2 text-xs text-faint" title={m.role === "admin" ? "Admins always have private feedback access" : undefined}>
+              Private
+              <Toggle
+                on={m.role === "admin" || m.privateAccess}
+                label={`Private feedback access for ${m.name}`}
+                onChange={(on) => {
+                  if (m.role === "admin") return;
+                  setPrivateAccess({ data: { userId: m.id, on } })
+                    .then(() => router.invalidate())
+                    .then(() => toast.success(on ? `${m.name} can read private feedback` : `${m.name} no longer sees private feedback`))
+                    .catch((e) => toast.error(e.message));
+                }}
+              />
+            </span>
             <DropdownMenu>
               <DropdownMenuTrigger disabled={you} className="inline-flex h-[26px] items-center gap-1.5 rounded-md border border-input bg-card px-2 text-xs capitalize outline-none hover:bg-accent disabled:opacity-60">
                 {m.role} <CaretDownIcon className="size-2.5 text-faint" />
