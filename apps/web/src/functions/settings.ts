@@ -14,7 +14,7 @@ import { assertNotDemo, assertNotDemoIdentity } from "@/lib/demo";
 import * as setup from "@/lib/ops/setup";
 import { updateWorkspace } from "@/lib/ops/workspace";
 import { adminOps } from "@/lib/ops/session";
-import { requireAdmin, requireUser, rootDomain, sessionMiddleware } from "@/lib/session";
+import { requireAdmin, requirePrivateAccess, requireUser, rootDomain, sessionMiddleware } from "@/lib/session";
 
 const slug = (s: string) =>
   s
@@ -106,17 +106,23 @@ export const getNotificationPrefs = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const u = requireUser(context.user);
     const [m] = await createDb()
-      .select({ notifyNewPost: membership.notifyNewPost, notifyComment: membership.notifyComment, notifyStatus: membership.notifyStatus })
+      .select({ notifyNewPost: membership.notifyNewPost, notifyComment: membership.notifyComment, notifyStatus: membership.notifyStatus, notifyPrivateFeedback: membership.notifyPrivateFeedback })
       .from(membership)
       .where(and(eq(membership.workspaceId, context.workspace.id), eq(membership.userId, u.id)));
-    return m ?? { notifyNewPost: true, notifyComment: true, notifyStatus: false };
+    return {
+      notifyNewPost: m?.notifyNewPost ?? true,
+      notifyComment: m?.notifyComment ?? true,
+      notifyStatus: m?.notifyStatus ?? false,
+      // Only people who can read private feedback get this switch; unset follows the role.
+      notifyPrivateFeedback: u.privateAccess ? (m?.notifyPrivateFeedback ?? u.role === "admin") : undefined,
+    };
   });
 
 export const saveNotificationPrefs = createServerFn({ method: "POST" })
   .middleware([sessionMiddleware])
-  .validator((d: unknown) => z.object({ notifyNewPost: z.boolean(), notifyComment: z.boolean(), notifyStatus: z.boolean() }).parse(d))
+  .validator((d: unknown) => z.object({ notifyNewPost: z.boolean(), notifyComment: z.boolean(), notifyStatus: z.boolean(), notifyPrivateFeedback: z.boolean().optional() }).parse(d))
   .handler(async ({ data, context }) => {
-    const u = requireUser(context.user);
+    const u = data.notifyPrivateFeedback === undefined ? requireUser(context.user) : requirePrivateAccess(context.user);
     await createDb().update(membership).set(data).where(and(eq(membership.workspaceId, context.workspace.id), eq(membership.userId, u.id)));
     return { ok: true };
   });

@@ -1,6 +1,6 @@
 import { createStartHandler, defaultStreamHandler } from "@tanstack/react-start/server";
 import { edgeCacheKey, hasSessionCookie, isImmutableAsset, isPrivatePath, isPublicCacheable } from "./lib/cache";
-import { frameAncestorsFor } from "./lib/widget-frame";
+import { frameAncestorsFor, privateFrameAncestorsFor } from "./lib/widget-frame";
 
 const handler = createStartHandler(defaultStreamHandler);
 
@@ -25,8 +25,9 @@ const SECURITY_HEADERS: Record<string, string> = {
 
 // The widget panel is the one page meant to live inside other sites' iframes,
 // and only the sites its workspace allows (any, until an admin lists some).
-// Everything else, the sign-in popup included, stays unframeable.
-const FRAMEABLE_PATHS = ["/widget"];
+// Everything else, the sign-in popup included, stays unframeable. The
+// private widget's frame follows its own receiver's list instead.
+const FRAMEABLE_PATHS: Record<string, (request: Request) => Promise<string>> = { "/widget": frameAncestorsFor, "/private-widget": privateFrameAncestorsFor };
 
 // `ancestors` is the frame-ancestors directive for a frameable page.
 function secure(response: Response, ancestors: string | null): Response {
@@ -41,8 +42,8 @@ function secure(response: Response, ancestors: string | null): Response {
 
 export default {
   async fetch(request: Request, _env: unknown, ctx: ExecutionContext) {
-    const frameable = FRAMEABLE_PATHS.includes(new URL(request.url).pathname);
-    const [response, ancestors] = await Promise.all([handle(request, ctx), frameable ? frameAncestorsFor(request) : null]);
+    const frameable = FRAMEABLE_PATHS[new URL(request.url).pathname];
+    const [response, ancestors] = await Promise.all([handle(request, ctx), frameable ? frameable(request) : null]);
     return secure(response, ancestors);
   },
   // Nightly: the public demo workspace goes back to its seed, and images that

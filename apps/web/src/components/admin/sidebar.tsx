@@ -9,6 +9,7 @@ import {
   CircleIcon,
   GearSixIcon,
   LifebuoyIcon,
+  LockSimpleIcon,
   MapTrifoldIcon,
   MegaphoneIcon,
   PlusIcon,
@@ -133,6 +134,7 @@ export function AdminSidebar({ onNewPost, onCollapse }: { onNewPost?: () => void
   const root = useLoaderData({ from: "__root__" });
   const { pathname, search } = useLocation();
   const inInbox = pathname.startsWith("/dashboard/inbox");
+  const admin = root.user?.role === "admin";
 
   return (
     <aside className="flex h-full min-h-0 w-[200px] flex-col px-3 pt-3.5 pb-4">
@@ -146,17 +148,22 @@ export function AdminSidebar({ onNewPost, onCollapse }: { onNewPost?: () => void
       {/* Pages scroll on short windows so the account footer stays on screen. */}
       <div className="-mx-3 min-h-0 flex-1 overflow-y-auto px-3 pb-3 [scrollbar-width:none]">
       <Group>
-        <Item to="/dashboard/inbox" active={inInbox && !(search as { status?: string }).status} icon={TrayIcon} label="Posts" count={root.total} />
-        <Item to="/dashboard/roadmap" icon={MapTrifoldIcon} label="Roadmap" />
-        <Item to="/dashboard/changelog" icon={MegaphoneIcon} label="Changelog" />
-        <Item to="/dashboard/help" icon={LifebuoyIcon} label="Help center" />
-        <Item icon={PlusIcon} label="New post" onClick={onNewPost} />
+        {admin ? (
+          <>
+            <Item to="/dashboard/inbox" active={inInbox && !(search as { status?: string }).status} icon={TrayIcon} label="Posts" count={root.total} />
+            <Item to="/dashboard/roadmap" icon={MapTrifoldIcon} label="Roadmap" />
+            <Item to="/dashboard/changelog" icon={MegaphoneIcon} label="Changelog" />
+            <Item to="/dashboard/help" icon={LifebuoyIcon} label="Help center" />
+          </>
+        ) : null}
+        <Item to="/dashboard/private" icon={LockSimpleIcon} label="Private feedback" />
+        {admin ? <Item icon={PlusIcon} label="New post" onClick={onNewPost} /> : null}
       </Group>
       </div>
 
       <AccountMenu>
         <Item to="/" icon={ArrowSquareOutIcon} label="Public board" />
-        <Item to="/dashboard/settings/general" icon={GearSixIcon} label="Settings" />
+        <Item to={admin ? "/dashboard/settings/general" : "/dashboard/settings/private-widget"} active={pathname.startsWith("/dashboard/settings")} icon={GearSixIcon} label="Settings" />
       </AccountMenu>
     </aside>
   );
@@ -286,6 +293,7 @@ export function AdminRail({ onExpand, onNewPost }: { onExpand?: () => void; onNe
   const root = useLoaderData({ from: "__root__" });
   const router = useRouter();
   const inInbox = pathname.startsWith("/dashboard/inbox");
+  const admin = root.user?.role === "admin";
   const cls = (on: boolean) => cn("inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg select-none", on ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground");
   return (
     <TooltipProvider delay={300}>
@@ -304,31 +312,42 @@ export function AdminRail({ onExpand, onNewPost }: { onExpand?: () => void; onNe
           </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Tip label="Posts">
-        <Link to="/dashboard/inbox" preload="viewport" className={cls(inInbox)}>
-          <TrayIcon className="size-[17px]" />
+      {admin ? (
+        <>
+          <Tip label="Posts">
+            <Link to="/dashboard/inbox" preload="viewport" className={cls(inInbox)}>
+              <TrayIcon className="size-[17px]" />
+            </Link>
+          </Tip>
+          <Tip label="Roadmap">
+            <Link to="/dashboard/roadmap" preload="viewport" className={cls(pathname.startsWith("/dashboard/roadmap"))}>
+              <MapTrifoldIcon className="size-[17px]" />
+            </Link>
+          </Tip>
+          <Tip label="Changelog">
+            <Link to="/dashboard/changelog" preload="viewport" className={cls(pathname.startsWith("/dashboard/changelog"))}>
+              <MegaphoneIcon className="size-[17px]" />
+            </Link>
+          </Tip>
+          <Tip label="Help center">
+            <Link to="/dashboard/help" preload="viewport" className={cls(pathname.startsWith("/dashboard/help"))}>
+              <LifebuoyIcon className="size-[17px]" />
+            </Link>
+          </Tip>
+        </>
+      ) : null}
+      <Tip label="Private feedback">
+        <Link to="/dashboard/private" preload="viewport" className={cls(pathname.startsWith("/dashboard/private"))}>
+          <LockSimpleIcon className="size-[17px]" />
         </Link>
       </Tip>
-      <Tip label="Roadmap">
-        <Link to="/dashboard/roadmap" preload="viewport" className={cls(pathname.startsWith("/dashboard/roadmap"))}>
-          <MapTrifoldIcon className="size-[17px]" />
-        </Link>
-      </Tip>
-      <Tip label="Changelog">
-        <Link to="/dashboard/changelog" preload="viewport" className={cls(pathname.startsWith("/dashboard/changelog"))}>
-          <MegaphoneIcon className="size-[17px]" />
-        </Link>
-      </Tip>
-      <Tip label="Help center">
-        <Link to="/dashboard/help" preload="viewport" className={cls(pathname.startsWith("/dashboard/help"))}>
-          <LifebuoyIcon className="size-[17px]" />
-        </Link>
-      </Tip>
-      <Tip label="New post">
-        <button type="button" onClick={onNewPost} className={cls(false)}>
-          <PlusIcon className="size-[17px]" />
-        </button>
-      </Tip>
+      {admin ? (
+        <Tip label="New post">
+          <button type="button" onClick={onNewPost} className={cls(false)}>
+            <PlusIcon className="size-[17px]" />
+          </button>
+        </Tip>
+      ) : null}
       </div>
       <div className="flex shrink-0 flex-col items-center gap-1 pt-1">
       {onExpand ? (
@@ -344,7 +363,7 @@ export function AdminRail({ onExpand, onNewPost }: { onExpand?: () => void; onNe
         </Link>
       </Tip>
       <Tip label="Settings">
-        <Link to="/dashboard/settings/general" preload="viewport" className={cls(pathname.startsWith("/dashboard/settings"))}>
+        <Link to={admin ? "/dashboard/settings/general" : "/dashboard/settings/private-widget"} preload="viewport" className={cls(pathname.startsWith("/dashboard/settings"))}>
           <GearSixIcon className="size-[17px]" />
         </Link>
       </Tip>

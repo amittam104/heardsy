@@ -76,6 +76,9 @@ pay for. Self-hosting is the default, not the afterthought.
 - Embeddable widget: one script tag puts feedback, the roadmap and the
   changelog inside your own app, with a "new" badge for fresh releases
   ([docs](docs/widget.md))
+- Private Feedback Widget: users or visitors of your app send bug reports and
+  feature requests with screenshots, no Heardsy account needed, read only by
+  your team ([docs](docs/private-widget.md))
 - Multi-workspace: each workspace lives on its own subdomain
 
 Internal package names and the widget API (`window.openheard` and

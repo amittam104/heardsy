@@ -137,3 +137,24 @@ export function confirmSubscriptionEmail(input: { workspaceName: string; confirm
     text: `Confirm changelog emails from ${workspaceName}\n\nConfirm here: ${confirmUrl}\n\nThis link expires in 7 days. If you did not ask for this, ignore this email.`,
   };
 }
+
+// New private feedback, to the receiving team. Title, type and a link only:
+// the message, contact details, metadata and images stay in the dashboard.
+export function privateFeedbackEmail(input: { workspaceName: string; type: "bug" | "feature"; title: string; url: string }): Rendered {
+  const { workspaceName, type, title, url } = input;
+  const label = type === "bug" ? "Bug" : "Feature request";
+  return {
+    subject: `New ${label.toLowerCase()}: ${oneLine(title, 80)}`,
+    html: emailLayout(
+      `
+      <p style="${TEXT} font-size: 13px; color: #999; margin: 0 0 8px;">New private feedback for ${escapeHtml(workspaceName)} &middot; ${label}</p>
+      <h1 style="${TEXT} font-size: 20px; font-weight: 700; color: #111; margin: 0 0 4px; letter-spacing: -0.3px;">${escapeHtml(title)}</h1>
+      ${emailButton(escapeHtml(url), "Open the report")}
+      <p style="${TEXT} font-size: 13px; color: #999; line-height: 1.6; margin: 0;">You are getting this because you review private feedback for ${escapeHtml(workspaceName)}. Change it under Settings &gt; Notifications.</p>
+    `,
+      "",
+      escapeHtml(workspaceName),
+    ),
+    text: [`New private feedback for ${workspaceName} · ${label}`, "", title, "", `Open the report: ${url}`, "", `Change these emails under Settings > Notifications.`].join("\n"),
+  };
+}

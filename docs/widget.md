@@ -12,6 +12,10 @@ It works on any site. The copy-paste snippet is in the dashboard under
 **Settings → Widget → Install**; how it looks and which tabs it shows are
 under **Appearance** and **Content**, next to a live preview.
 
+For bug reports and feature requests that only your team reads, with no
+Heardsy sign-in for the reporter, use the separate
+[Private Feedback Widget](private-widget.md).
+
 ## Install
 
 Add one tag before `</body>`:

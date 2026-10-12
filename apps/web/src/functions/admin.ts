@@ -5,6 +5,7 @@ import { and, asc, desc, eq, gt, inArray, lte, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import { DEMO_ADMIN_ID, assertNotDemo, assertNotDemoIdentity } from "@/lib/demo";
+import { clearRevokedAssignments } from "@/lib/ops/private-access";
 import { setPostBoard } from "@/lib/ops/posts";
 import { adminOps } from "@/lib/ops/session";
 import { RESERVED_SLUGS, createWorkspace as createWorkspaceOp, listMembers as listMembersOp, slugify } from "@/lib/ops/workspace";
@@ -139,10 +140,35 @@ export const setRole = createServerFn({ method: "POST" })
     // membership is also what marks the demo workspace as ours to reset.
     if (data.userId === DEMO_ADMIN_ID) throw new Error("Reserved account");
     if (data.userId === me.id && data.role !== "admin") throw new Error("You cannot remove your own admin role");
-    await createDb()
-      .insert(membership)
-      .values({ workspaceId: context.workspace.id, userId: data.userId, role: data.role })
-      .onConflictDoUpdate({ target: [membership.workspaceId, membership.userId], set: { role: data.role } });
+    const db = createDb();
+    await db.batch([
+      db
+        .insert(membership)
+        .values({ workspaceId: context.workspace.id, userId: data.userId, role: data.role })
+        .onConflictDoUpdate({ target: [membership.workspaceId, membership.userId], set: { role: data.role } }),
+      ...clearRevokedAssignments(db, context.workspace.id, data.userId, me.id),
+    ]);
+    return { ok: true };
+  });
+
+// The explicit private feedback grant for a member. Admins have it anyway.
+export const setPrivateAccess = createServerFn({ method: "POST" })
+  .middleware([sessionMiddleware])
+  .validator((d: unknown) => z.object({ userId: z.string(), on: z.boolean() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const me = requireAdmin(context.user);
+    assertNotDemo(context.workspace);
+    if (data.userId === DEMO_ADMIN_ID) throw new Error("Reserved account");
+    const db = createDb();
+    const [updated] = await db.batch([
+      db
+        .update(membership)
+        .set({ privateAccess: data.on })
+        .where(and(eq(membership.workspaceId, context.workspace.id), eq(membership.userId, data.userId)))
+        .returning({ userId: membership.userId }),
+      ...clearRevokedAssignments(db, context.workspace.id, data.userId, me.id),
+    ]);
+    if (!updated.length) throw new Error("Not a member of this workspace");
     return { ok: true };
   });
 
