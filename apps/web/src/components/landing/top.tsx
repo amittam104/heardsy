@@ -1,15 +1,15 @@
 import { ListIcon, XIcon } from "@phosphor-icons/react";
 import { Link, useLoaderData } from "@tanstack/react-router";
-import { AnimatePresence, motion, useReducedMotion, useScroll } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@openheard/ui/components/button";
+import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "@openheard/ui/components/dialog";
 import { cn } from "@openheard/ui/lib/utils";
 import { DEMO_WORKSPACE_ID } from "@/lib/demo";
-import { workspaceUrl } from "@/lib/workspace-url";
+import { signedInHome, workspaceUrl } from "@/lib/workspace-url";
 import Logo from "../logo";
 import { BlurFade } from "./magic/blur-fade";
-import { BorderBeam } from "./magic/border-beam";
 import { AnimatedSpan, Terminal, TypingAnimation } from "./magic/terminal";
 import { Framed, SectionHeader } from "./shared";
 
@@ -23,87 +23,129 @@ const links = [
   { href: GITHUB, label: "GitHub" },
 ];
 
+type Cta = { href: string; label: string };
+
+// `start` is the way in for someone new: a cloud workspace, or this
+// install's board. `account` is set once signed in: the dashboard for people
+// who run a workspace, the board for everyone else.
+export function useLandingCtas(): { start: Cta; account: Cta | null } {
+  const root = useLoaderData({ from: "__root__" });
+  const own = (root as { ownWorkspaces?: { id: string; name: string }[] }).ownWorkspaces ?? [];
+  const start = root.rootDomain ? { href: "/start", label: "Start for free" } : { href: root.boardPath, label: "Open feedback board" };
+  if (!root.user) return { start, account: null };
+  if (root.marketing) {
+    const latest = own[own.length - 1];
+    return { start, account: latest ? { href: workspaceUrl(latest.id, root.rootDomain, "/dashboard"), label: "Go to dashboard" } : { href: "/new", label: "Create a workspace" } };
+  }
+  if (root.localDashboard) return { start, account: { href: root.localDashboard, label: "Go to dashboard" } };
+  if (root.user.role === "admin" || root.user.privateAccess) return { start, account: { href: signedInHome(root.user, root.workspace.name, root.boardPath), label: "Go to dashboard" } };
+  return { start, account: { href: root.boardPath, label: "Open feedback board" } };
+}
+
+// Render target for a CTA Button: a router link in-app, a plain anchor off-site.
+export function ctaLink(href: string) {
+  return href.startsWith("/") && !href.includes("ws=") ? <Link to={href} /> : <a href={href} />;
+}
+
 export function Nav() {
-  const { scrollY } = useScroll();
   const [scrolled, setScrolled] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const reduce = useReducedMotion();
-  useEffect(() => scrollY.on("change", (v) => setScrolled(v > 10)), [scrollY]);
-  const root = useLoaderData({ from: "__root__" });
-  const own = (root as { ownWorkspaces?: { id: string; name: string }[] }).ownWorkspaces;
-  const ctaHref = useMemo(() => {
-    if (root?.user && own && own.length > 0) return workspaceUrl(own[own.length - 1]!.id, root.rootDomain, "/dashboard");
-    if (root?.user) return "/new";
-    return "/start";
-  }, [root, own]);
-  const cta = root?.user ? "Go to dashboard" : "Start for free";
+  const { start, account } = useLandingCtas();
+  const pendingSection = useRef<string | null>(null);
 
   useEffect(() => {
-    if (drawerOpen) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
-    return () => { document.body.style.overflow = ""; };
-  }, [drawerOpen]);
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const primary = account ?? start;
 
   return (
-    <header className={cn("sticky z-50 mx-4 flex justify-center transition-all duration-300 md:mx-0", scrolled ? "top-6" : "top-4 mx-0")}>
-      <motion.div initial={{ width: "70rem" }} animate={{ width: scrolled ? "800px" : "70rem" }} transition={reduce ? { duration: 0 } : { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }} className="max-w-full">
-        <div className={cn("mx-auto max-w-7xl rounded-2xl transition-all duration-300 xl:px-0", scrolled ? "border border-border bg-background/75 px-2 backdrop-blur-lg" : "px-7 shadow-none")}>
-          <div className="flex h-[56px] items-center justify-between p-4">
-            <Link to="/" className="flex items-center gap-2.5 text-[15px] font-semibold tracking-[-0.01em] text-foreground">
-              <Logo size={22} />
-              Heardsy
-            </Link>
-            <nav className="hidden items-center gap-1 md:flex">
-              {links.map((n) => (
-                <a key={n.label} href={n.href} className="rounded-full px-3 py-1.5 text-[14px] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground">
-                  {n.label}
-                </a>
-              ))}
-            </nav>
-            <div className="flex items-center gap-4">
-              <Button variant="secondary" size="sm" nativeButton={false} render={ctaHref.startsWith("/") ? <Link to={ctaHref} /> : <a href={ctaHref} />} className="hidden sm:inline-flex">
-                {cta}
-              </Button>
-              <button type="button" onClick={() => setDrawerOpen((o) => !o)} className="flex size-8 cursor-pointer items-center justify-center rounded-md border border-border md:hidden" aria-label="Menu">
-                {drawerOpen ? <XIcon className="size-5" /> : <ListIcon className="size-5" />}
-              </button>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      <AnimatePresence>
-        {drawerOpen && (
-          <>
-            <motion.div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: reduce ? 0 : 0.2 }} onClick={() => setDrawerOpen(false)} />
-            <motion.div className="fixed inset-x-0 bottom-3 z-50 mx-auto w-[95%] rounded-xl border border-border bg-background p-4 shadow-lg" initial={reduce ? { opacity: 0 } : { opacity: 0, y: 100 }} animate={{ opacity: 1, y: 0, transition: reduce ? { duration: 0 } : { type: "spring", damping: 15, stiffness: 200 } }} exit={reduce ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, y: 100, transition: { duration: 0.1 } }}>
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <Link to="/" className="flex items-center gap-2.5 text-[15px] font-semibold">
-                    <Logo size={26} />
-                    Heardsy
-                  </Link>
-                  <button type="button" onClick={() => setDrawerOpen(false)} className="cursor-pointer rounded-md border border-border p-1" aria-label="Close menu">
-                    <XIcon className="size-5" />
-                  </button>
-                </div>
-                <ul className="flex flex-col rounded-md border border-border text-sm">
+    <header className={cn("sticky top-0 z-50 border-b transition-colors duration-200", scrolled ? "border-border bg-background" : "border-transparent")}>
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-4 md:px-10">
+        <Link to="/" className="flex shrink-0 items-center gap-2.5 rounded-md text-[15px] font-semibold tracking-[-0.01em] text-foreground">
+          <Logo size={22} />
+          Heardsy
+        </Link>
+        <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+          {links.map((n) => (
+            <a key={n.label} href={n.href} className="rounded-md px-3 py-1.5 text-[14px] text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground">
+              {n.label}
+            </a>
+          ))}
+        </nav>
+        <div className="flex items-center gap-2">
+          {account ? null : (
+            <Button variant="ghost" size="sm" nativeButton={false} render={<Link to="/login" />} className="text-foreground">
+              Sign in
+            </Button>
+          )}
+          <Button size="sm" nativeButton={false} render={ctaLink(primary.href)} className="hidden sm:inline-flex">
+            {primary.label}
+          </Button>
+          <Dialog
+            open={drawerOpen}
+            onOpenChange={setDrawerOpen}
+            onOpenChangeComplete={(open) => {
+              if (open || !pendingSection.current) return;
+              document.getElementById(pendingSection.current)?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+              pendingSection.current = null;
+            }}
+          >
+            <DialogTrigger aria-label="Open menu" className="flex size-10 shrink-0 items-center justify-center rounded-md border border-border md:hidden">
+              <ListIcon aria-hidden className="size-5" />
+            </DialogTrigger>
+            <DialogContent
+              showClose={false}
+              className="top-auto right-3 bottom-3 left-3 max-h-[calc(100dvh-1.5rem)] w-auto max-w-none translate-x-0 translate-y-0 overflow-y-auto overscroll-contain rounded-xl bg-background p-4 md:hidden"
+            >
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2.5 text-[15px] font-semibold">
+                  <Logo size={22} />
+                  <DialogTitle className="text-[15px]">Heardsy menu</DialogTitle>
+                </span>
+                <DialogClose aria-label="Close menu" className="inline-flex size-10 items-center justify-center rounded-md border border-border">
+                  <XIcon aria-hidden className="size-5" />
+                </DialogClose>
+              </div>
+              <nav aria-label="Main">
+                <ul className="flex flex-col divide-y divide-border rounded-lg border border-border text-sm">
                   {links.map((n) => (
-                    <li key={n.label} className="border-b border-border p-2.5 last:border-b-0">
-                      <a href={n.href} onClick={(e) => { setDrawerOpen(false); if (!n.href.startsWith("#")) return; e.preventDefault(); document.getElementById(n.href.substring(1))?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" }); }} className="text-muted-foreground transition-colors hover:text-foreground">
+                    <li key={n.label}>
+                      <a
+                        href={n.href}
+                        onClick={(e) => {
+                          if (n.href.startsWith("#")) {
+                            e.preventDefault();
+                            pendingSection.current = n.href.substring(1);
+                          }
+                          setDrawerOpen(false);
+                        }}
+                        className="flex min-h-11 items-center px-3 text-muted-foreground transition-colors hover:text-foreground"
+                      >
                         {n.label}
                       </a>
                     </li>
                   ))}
                 </ul>
-                <Button full size="lg" nativeButton={false} render={ctaHref.startsWith("/") ? <Link to={ctaHref} /> : <a href={ctaHref} />}>
-                  {cta}
+              </nav>
+              <div className="flex flex-col gap-2">
+                <Button full size="lg" nativeButton={false} render={ctaLink(primary.href)}>
+                  {primary.label}
                 </Button>
+                {account ? null : (
+                  <Button full size="lg" variant="secondary" nativeButton={false} render={<Link to="/login" />}>
+                    Sign in
+                  </Button>
+                )}
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
     </header>
   );
 }
@@ -116,9 +158,6 @@ const agents = [
   ["Gemini CLI", "googlegemini"],
 ] as const;
 
-// Template hero: px-6, radial wash 600/800px tall with rounded-b-xl, pt-32,
-// max-w-3xl, gap-10. Then the product shot in px-6 mt-10 rounded-2xl.
-// The demo board lives on its own subdomain, so it needs an absolute URL.
 // Signs the visitor in as the demo admin. Needs the demo subdomain, so it
 // hides on installs without a root domain.
 function DemoButton() {
@@ -133,56 +172,56 @@ function DemoButton() {
 }
 
 export function Hero() {
+  const { start, account } = useLandingCtas();
+  const primary = account ?? start;
   return (
     <section id="hero" className="relative w-full">
       <div className="relative flex w-full flex-col items-center px-6">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 -z-10 h-[600px] w-full rounded-b-xl [background:radial-gradient(125%_125%_at_50%_10%,var(--background)_40%,rgba(110,139,255,.28)_100%)] md:h-[800px]" />
-        </div>
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-3xl flex-col items-center justify-center gap-8 pt-24 md:gap-10 md:pt-32">
-          <div className="flex flex-col items-center justify-center gap-5">
+        <div className="mx-auto flex w-full max-w-3xl flex-col items-center gap-8 pt-16 md:gap-10 md:pt-28">
+          <div className="flex flex-col items-center gap-5">
             <BlurFade delay={0}>
-              <h1 className="text-center text-[28px] font-medium tracking-tighter text-balance sm:text-4xl md:text-5xl lg:text-6xl xl:text-[68px] xl:leading-[1.02]">The open source Canny alternative</h1>
+              <h1 className="text-center text-[32px] leading-[1.1] font-semibold tracking-[-0.03em] text-balance sm:text-5xl md:text-6xl xl:text-[68px] xl:leading-[1.02]">The open source Canny alternative</h1>
             </BlurFade>
             <BlurFade delay={0.08}>
-              <p className="max-w-[54ch] text-center text-base leading-relaxed font-medium tracking-tight text-balance text-muted-foreground md:text-lg">Users post and vote. Your agents read the top requests, move the roadmap and draft the changelog. Self-host on your own Cloudflare account, or use the cloud.</p>
+              <p className="max-w-[54ch] text-center text-base leading-relaxed text-pretty text-muted-foreground md:text-lg">Users post and vote. Your agents read the top requests, move the roadmap and draft the changelog. Self-host on your own Cloudflare account, or use the cloud.</p>
             </BlurFade>
           </div>
           <BlurFade delay={0.16}>
             <div className="flex flex-col items-center gap-6">
-              <div className="flex items-center justify-center gap-3">
-                <Button size="lg" arrow nativeButton={false} render={<Link to="/start" />}>
-                  Get started
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Button size="lg" arrow nativeButton={false} render={ctaLink(primary.href)}>
+                  {primary.label}
                 </Button>
                 <DemoButton />
               </div>
-              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-                <span className="text-xs font-medium text-muted-foreground">Works with</span>
+              <ul role="list" aria-label="Works with" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+                <li className="text-xs font-medium text-muted-foreground" aria-hidden>
+                  Works with
+                </li>
                 {agents.map(([name, mark]) => (
-                  <span key={name} className="inline-flex items-center gap-2 text-[13px] text-muted-foreground">
+                  <li key={name} className="inline-flex items-center gap-2 text-[13px] text-muted-foreground">
                     <span aria-hidden className="size-3.5 shrink-0 bg-current [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]" style={{ maskImage: `url(/landing/logos/${mark}.svg)` }} />
                     {name}
-                  </span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           </BlurFade>
         </div>
       </div>
-      <BlurFade delay={0.28} className="relative mt-10 px-6">
-        <div className="relative size-full overflow-hidden rounded-2xl border border-input bg-card shadow-xl">
-          <div className="flex items-center gap-2 border-b border-border px-4 py-2.5">
-            <span className="size-2.5 rounded-full bg-[#2a2a30]" />
-            <span className="size-2.5 rounded-full bg-[#2a2a30]" />
-            <span className="size-2.5 rounded-full bg-[#2a2a30]" />
-            <span className="mx-auto rounded-md bg-background px-3 py-0.5 text-[11px] text-faint">feedback.acme.com</span>
+      <BlurFade delay={0.28} className="relative mt-12 px-4 md:px-6">
+        <figure className="relative size-full overflow-hidden rounded-2xl border border-input bg-card">
+          <div aria-hidden className="flex items-center gap-2 border-b border-border px-4 py-2.5">
+            <span className="size-2.5 rounded-full bg-input" />
+            <span className="size-2.5 rounded-full bg-input" />
+            <span className="size-2.5 rounded-full bg-input" />
+            <span className="mx-auto rounded-md bg-background px-3 py-0.5 text-[11px] text-muted-foreground">feedback.acme.com</span>
           </div>
           <picture>
             <source srcSet="/landing/board.webp" type="image/webp" />
-            <img src="/landing/board.png" alt="The OpenHeard public board (upstream screenshot): a list of feature requests with vote counts" width={1920} height={1080} className="block aspect-[4/3] w-full object-cover object-top sm:aspect-[1920/1000]" fetchPriority="high" />
+            <img src="/landing/board.png" alt="A Heardsy public board: feature requests ranked by votes, with boards and roadmap counts beside them" width={1920} height={1080} className="block aspect-[4/3] w-full object-cover object-top sm:aspect-[1920/1000]" fetchPriority="high" />
           </picture>
-          <BorderBeam size={260} duration={10} colorFrom="#6e8bff" colorTo="#6e8bff00" />
-        </div>
+        </figure>
       </BlurFade>
       <div className="h-10" />
     </section>

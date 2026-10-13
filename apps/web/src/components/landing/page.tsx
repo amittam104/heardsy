@@ -3,6 +3,7 @@ import { Connect } from "./connect";
 import { Surfaces } from "./more";
 import { Page } from "./shared";
 import { Agents, Hero, Nav } from "./top";
+import { SkipLink } from "../bits";
 
 // Template page: outer column with rails, navbar inside it, main with one
 // hairline between every section.
@@ -10,8 +11,9 @@ export function Landing() {
   return (
     <div className="isolate min-h-svh bg-background font-sans text-foreground antialiased">
       <Page>
+        <SkipLink />
         <Nav />
-        <main className="flex w-full flex-col items-center justify-center divide-y divide-border">
+        <main id="main" tabIndex={-1} className="flex w-full flex-col items-center justify-center divide-y divide-border">
           <Hero />
           <Agents />
           <Products />
