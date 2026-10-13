@@ -2,7 +2,7 @@ import { ArrowLeftIcon, ArrowsMergeIcon, PaperclipIcon } from "@phosphor-icons/r
 import { Link, createFileRoute, notFound, useLoaderData, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { openSignIn } from "@/lib/pending-action";
+import { openSignIn, requestComposer } from "@/lib/pending-action";
 
 import { Button } from "@openheard/ui/components/button";
 import { CopyButton } from "@openheard/ui/components/interior/copy-button";
@@ -138,7 +138,7 @@ function PostPage() {
 
   const rail = (
     <>
-      <Button full arrow size="lg" onClick={() => router.navigate({ to: "/" })} className="brand-cta">
+      <Button full arrow size="lg" onClick={() => router.navigate({ to: root.boardPath }).then(requestComposer)} className="brand-cta">
         Post idea
       </Button>
       <section>
@@ -208,8 +208,8 @@ function PostPage() {
     <SkeletonSwap ready={ready} skeleton={<PostSkeleton />}>
     <Shell rail={rail}>
       <div className="flex items-center justify-between">
-        <Link to="/" search={{ board: p.boardId }} className="inline-flex items-center gap-1.5 text-[13px] text-muted-foreground hover:text-foreground">
-          <ArrowLeftIcon className="size-3.5 text-faint" /> {p.board.name}
+        <Link to={root.boardPath} search={{ board: p.boardId }} className="inline-flex min-h-8 items-center gap-1.5 rounded-md text-[13px] text-muted-foreground outline-none hover:text-foreground">
+          <ArrowLeftIcon aria-hidden className="size-3.5" /> {p.board.name}
         </Link>
         {admin ? (
           <Link to="/dashboard/inbox" search={{ status: p.status, post: p.id }} className="text-xs text-faint hover:text-foreground">
@@ -296,7 +296,7 @@ function PostPage() {
           <DraftTray drafts={images} />
           <DraftError drafts={images} />
           <div className="flex items-center justify-between">
-            <AttachButton drafts={images} className="-ml-1.5 inline-flex h-7 items-center gap-1.5 rounded-md px-1.5 text-xs text-faint outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring">
+            <AttachButton drafts={images} className="-ml-1.5 inline-flex h-7 items-center gap-1.5 rounded-md px-1.5 text-xs text-faint outline-none transition-colors hover:bg-accent hover:text-foreground">
               <PaperclipIcon className="size-3.5" /> Attach
             </AttachButton>
             <Button variant="secondary" size="sm" type="submit" disabled={(reply.trim().length === 0 && images.ids.length === 0) || images.uploading}>

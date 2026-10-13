@@ -253,7 +253,7 @@ export function LoadingButton({
           }
           run();
         }}
-        className={`group/button relative inline-flex h-[34px] select-none items-center justify-start rounded-lg bg-white pl-3.5 pr-[38px] text-[13px] font-semibold text-[#0d0d0f] shadow-[inset_0_-1px_0_rgba(0,0,0,.14),0_1px_2px_rgba(0,0,0,.4)] outline-none transition-[box-shadow,background-color] duration-150 hover:bg-[#f4f4f6] active:bg-[#e8e8ec] focus-visible:ring-2 focus-visible:ring-ring/60 disabled:pointer-events-none disabled:opacity-50 ${className}`}
+        className={`group/button relative inline-flex h-[34px] select-none items-center justify-start rounded-lg bg-white pl-3.5 pr-[38px] text-[13px] font-semibold text-[#0d0d0f] shadow-[inset_0_-1px_0_rgba(0,0,0,.14),0_1px_2px_rgba(0,0,0,.4)] outline-none transition-[box-shadow,background-color] duration-150 hover:bg-[#f4f4f6] active:bg-[#e8e8ec] disabled:pointer-events-none disabled:opacity-50 ${className}`}
         style={{ touchAction: "manipulation" }}
       >
         <i aria-hidden className="pointer-events-none absolute top-1 right-1 bottom-1 grid w-[26px] place-items-center rounded-md bg-black/[.08] shadow-[inset_0_1px_1px_rgba(0,0,0,.12)] transition-colors duration-150 group-hover/button:bg-black/[.11]">

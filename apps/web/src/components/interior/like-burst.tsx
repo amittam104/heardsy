@@ -227,7 +227,7 @@ export function LikeBurst({
           onToggle?.(!liked);
         }}
         style={{ touchAction: "manipulation" }}
-        className="inline-flex h-9 select-none items-center gap-2 rounded-[9px] border border-border bg-card px-3 text-[13px] font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/60 disabled:opacity-50"
+        className="inline-flex h-9 select-none items-center gap-2 rounded-[9px] border border-border bg-card px-3 text-[13px] font-medium text-foreground outline-none disabled:opacity-50"
       >
         <span aria-hidden className="relative block size-[18px]">
           <motion.svg

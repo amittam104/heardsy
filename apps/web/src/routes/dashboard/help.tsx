@@ -301,7 +301,7 @@ function Editor({ article, collections, defaultCollection, onClose }: { article:
           <div className="mx-auto flex w-full max-w-[720px] flex-col gap-4 px-6 py-10">
             <div className="flex flex-wrap items-center gap-2">
               <DropdownMenu>
-                <DropdownMenuTrigger className="inline-flex h-7 items-center gap-1.5 rounded-md border border-input bg-secondary pr-2 pl-2.5 text-[12px] text-foreground outline-none hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring">
+                <DropdownMenuTrigger className="inline-flex h-7 items-center gap-1.5 rounded-md border border-input bg-secondary pr-2 pl-2.5 text-[12px] text-foreground outline-none hover:bg-accent">
                   <HelpIcon name={collection?.icon ?? "book"} className="size-3.5 text-muted-foreground" />
                   {collection?.title ?? "No collection"}
                   <CaretDownIcon className="size-2.5 text-faint" />

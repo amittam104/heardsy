@@ -20,22 +20,22 @@ export function RailLabel({ children }: { children: ReactNode }) {
 
 export function RailItem({ active, onClick, label, count, color, to, search }: { active?: boolean; onClick?: () => void; label: ReactNode; count?: number | string; color?: string; to?: string; search?: Record<string, unknown> }) {
   const cls = cn(
-    "flex w-full items-center justify-between rounded-md px-2.5 py-[7px] text-left text-[13px] active:scale-[0.99]",
+    "flex min-h-8 w-full items-center justify-between gap-3 rounded-md px-2.5 py-[7px] text-left text-[13px] outline-none",
     active ? "bg-secondary font-semibold text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
     !onClick && !to && "cursor-default hover:bg-transparent hover:text-muted-foreground",
   );
   const inner = (
     <>
-      <span className="flex items-center gap-2.5">
-        {color ? <span className="size-[7px] rounded-full" style={{ background: color }} /> : null}
-        {label}
+      <span className="flex min-w-0 items-center gap-2.5">
+        {color ? <span aria-hidden className="size-[7px] shrink-0 rounded-full" style={{ background: color }} /> : null}
+        <span className="min-w-0 break-words">{label}</span>
       </span>
       {count !== undefined ? <span className="text-xs text-faint tabular-nums">{count}</span> : null}
     </>
   );
   if (to) {
     return (
-      <Link to={to} search={search} preload="viewport" className={cls}>
+      <Link to={to} search={search} preload="viewport" aria-current={active ? "true" : undefined} className={cls}>
         {inner}
       </Link>
     );

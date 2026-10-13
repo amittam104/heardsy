@@ -1,6 +1,6 @@
 import type { Icon } from "@phosphor-icons/react";
 import { BookOpenIcon, ChatCircleIcon, CodeIcon, CreditCardIcon, GearIcon, InfoIcon, LightbulbIcon, PlugsIcon, RocketIcon, ShieldCheckIcon, UsersIcon } from "@phosphor-icons/react";
-import { useNavigate } from "@tanstack/react-router";
+import { useLoaderData, useNavigate } from "@tanstack/react-router";
 import { Fragment, type ReactNode } from "react";
 
 import { Button } from "@openheard/ui/components/button";
@@ -42,11 +42,12 @@ export function HelpLabel({ children, className }: { children: ReactNode; classN
 // Everything the help center cannot answer goes to the board's composer.
 export function AskOnBoard({ full }: { full?: boolean }) {
   const navigate = useNavigate();
+  const board = useLoaderData({ from: "__root__" }).boardPath;
   return (
     <Button
       arrow
       full={full}
-      onClick={() => navigate({ to: "/" }).then(requestComposer)}
+      onClick={() => navigate({ to: board }).then(requestComposer)}
     >
       Ask on the board
     </Button>

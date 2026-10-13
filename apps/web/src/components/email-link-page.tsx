@@ -1,10 +1,11 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLoaderData } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 
 import { WorkspaceLogo } from "@/components/logo";
 
 // The small centred page behind a link in an email: confirm, unsubscribe.
 export function EmailLinkPage({ title, body, children }: { title: string; body: ReactNode; children?: ReactNode }) {
+  const board = useLoaderData({ from: "__root__" })?.boardPath ?? "/";
   return (
     <main className="flex flex-1 items-center justify-center px-5 py-16">
       <div className="flex w-full max-w-[380px] flex-col items-center gap-6">
@@ -14,7 +15,7 @@ export function EmailLinkPage({ title, body, children }: { title: string; body: 
           <p className="text-sm text-muted-foreground">{body}</p>
         </div>
         {children}
-        <Link to="/" className="text-sm text-faint hover:text-foreground">
+        <Link to={board} className="text-sm text-muted-foreground hover:text-foreground">
           Go to the board
         </Link>
       </div>

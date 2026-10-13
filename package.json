@@ -1,5 +1,6 @@
 {
   "name": "heardsy",
+  "version": "0.2.0",
   "private": true,
   "description": "Heardsy: an open-source feedback board, roadmap, changelog and embeddable widget, forked from OpenHeard.",
   "license": "AGPL-3.0",

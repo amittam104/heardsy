@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@openheard/ui/components/dropdown-menu";
-import { GearSixIcon } from "@phosphor-icons/react";
+import { GearSixIcon, LockSimpleIcon } from "@phosphor-icons/react";
 import { Link, useLoaderData, useRouter } from "@tanstack/react-router";
 
 import { authClient } from "@/lib/auth-client";
@@ -34,17 +34,15 @@ export default function UserMenu() {
 
   if (!user) {
     return (
-      <Link to="/login">
-        <Button variant="outline" size="sm">
-          Sign in
-        </Button>
-      </Link>
+      <Button variant="outline" size="sm" nativeButton={false} render={<Link to="/login" />}>
+        Sign in
+      </Button>
     );
   }
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring">
+      <DropdownMenuTrigger aria-label={`Account: ${user.name}`} className="inline-flex size-10 items-center justify-center rounded-full outline-none md:size-8">
         <Avatar name={user.name} image={user.image} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-48">
@@ -58,10 +56,18 @@ export default function UserMenu() {
             <DropdownMenuItem render={<Link to="/dashboard/inbox" />}>
               <GearSixIcon className="size-4" /> Dashboard
             </DropdownMenuItem>
+          ) : user.privateAccess ? (
+            <DropdownMenuItem render={<Link to="/dashboard/private" />}>
+              <LockSimpleIcon className="size-4" /> Private feedback
+            </DropdownMenuItem>
+          ) : data.localDashboard ? (
+            <DropdownMenuItem render={<a href={data.localDashboard} />}>
+              <GearSixIcon className="size-4" /> Dashboard
+            </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem
             onClick={() =>
-              authClient.signOut({ fetchOptions: { onSuccess: () => router.invalidate().then(() => router.navigate({ to: "/" })) } })
+              authClient.signOut({ fetchOptions: { onSuccess: () => router.invalidate().then(() => router.navigate({ to: data.boardPath })) } })
             }
           >
             Sign out

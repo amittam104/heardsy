@@ -4,13 +4,14 @@ import { useEffect } from "react";
 
 import Footer from "../components/footer";
 import Header from "../components/header";
+import { SkipLink } from "../components/bits";
 import Logo from "../components/logo";
 import { SignInDialog } from "../components/sign-in-dialog";
 
 import { getWorkspace } from "../functions/workspace";
 import { officialWidgetSrc } from "../lib/official-widget";
 import type { MissingWorkspace } from "../lib/session";
-import { brandForeground, themeScript, useVisitorTheme } from "../lib/visitor-theme";
+import { DASHBOARD_THEME_KEY, boardThemeKey, brandForeground, themeScript, useVisitorTheme } from "../lib/visitor-theme";
 import appCss from "../index.css?url";
 import geistLatinFont from "@fontsource-variable/geist/files/geist-latin-wght-normal.woff2?url";
 
@@ -78,9 +79,9 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
     return (
       <main className="mx-auto max-w-3xl px-8 py-24 text-center">
         <h1 className="text-xl font-semibold">Nothing here</h1>
-        <p className="mt-2 text-muted-foreground">That page or workspace does not exist.</p>
+        <p className="mt-2 text-muted-foreground">That page or workspace does not exist. Check the address, or start again from the home page.</p>
         <a href="/" className="mt-6 inline-block text-sm text-link hover:underline">
-          Back to the board
+          Go to the home page
         </a>
       </main>
     );
@@ -119,9 +120,9 @@ function RootDocument() {
   const data = Route.useLoaderData();
   const pathname = useRouterState({ select: (s) => (s.resolvedLocation ?? s.location).pathname });
   const admin = pathname.startsWith("/dashboard");
-  // /landing previews the marketing page anywhere; on the cloud root domain
-  // the marketing page is the home page.
-  const marketing = pathname === "/landing" || (!!data?.marketing && pathname === "/");
+  // The main origin opens on the marketing page; a workspace subdomain
+  // previews it at /landing.
+  const marketing = pathname === "/landing" || (pathname === "/" && !!data && data.boardPath !== "/");
   // Our own feedback widget, added after hydration so it never blocks the page.
   const feedbackWidget = data ? officialWidgetSrc({ marketing: !!data.marketing, rootDomain: data.rootDomain, pathname }) : null;
   useEffect(() => {
@@ -141,8 +142,11 @@ function RootDocument() {
   // the workspace theme when they have not picked one.
   const visitorPage = !widget && !admin && !marketing;
   const workspaceTheme = data?.workspace.theme === "light" ? "light" : "dark";
-  const visitor = useVisitorTheme(data?.workspace.id ?? "", workspaceTheme, visitorPage && !!data);
-  const theme = widget ? ((pathname === "/widget" || pathname === "/private-widget") && widgetTheme === "light" ? "" : "dark") : visitorPage ? (visitor.dark ? "dark" : "") : "dark";
+  const visitor = useVisitorTheme(boardThemeKey(data?.workspace.id ?? ""), workspaceTheme, visitorPage && !!data);
+  // The dashboard keeps its own choice, dark until one is made.
+  const dashboard = useVisitorTheme(DASHBOARD_THEME_KEY, "dark", admin && !!data);
+  const dark = widget ? !((pathname === "/widget" || pathname === "/private-widget") && widgetTheme === "light") : visitorPage ? visitor.dark : admin ? dashboard.dark : true;
+  const theme = dark ? "dark" : "";
   // Workspace accent applies to the public board only; the dashboard keeps ours.
   // The private frame takes its accent from its own receiver's config instead.
   const accentColor = !admin && pathname !== "/private-widget" ? data?.workspace.accent : null;
@@ -171,7 +175,8 @@ function RootDocument() {
     // told not to flag the difference on <html>.
     <html lang="en" className={theme} style={accent} data-brand={accentColor && visitorPage ? "" : undefined} suppressHydrationWarning>
       <head>
-        {visitorPage ? <script dangerouslySetInnerHTML={{ __html: themeScript(data.workspace.id, workspaceTheme) }} /> : null}
+        {visitorPage ? <script dangerouslySetInnerHTML={{ __html: themeScript(boardThemeKey(data.workspace.id), workspaceTheme) }} /> : null}
+        {admin ? <script dangerouslySetInnerHTML={{ __html: themeScript(DASHBOARD_THEME_KEY, "dark") }} /> : null}
         <HeadContent />
       </head>
       <body>
@@ -187,8 +192,9 @@ function RootDocument() {
           </div>
         ) : (
           <div className="flex min-h-svh flex-col">
+            <SkipLink />
             <Header />
-            <div className="flex flex-1 flex-col">
+            <div id="main" tabIndex={-1} className="flex flex-1 flex-col">
               <Outlet />
             </div>
             <Footer />

@@ -234,7 +234,7 @@ function Widget() {
             </span>
           )}
           <span className="min-w-0 flex-1 truncate text-[15px] font-semibold tracking-[-0.01em]">{ws.name} feedback</span>
-          <a href="/" target="_blank" rel="noopener" title="Open the full board" aria-label="Open the full board" className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+          <a href={root.boardPath} target="_blank" rel="noopener" title="Open the full board" aria-label="Open the full board" className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
             <ArrowsOutSimpleIcon className="size-4" />
           </a>
           {embedded ? (

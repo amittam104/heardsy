@@ -22,7 +22,7 @@ import { widgetSnippet } from "./snippet";
 // The openheard MCP server: everything an admin does in the dashboard, as
 // tools. Every write goes through lib/ops, the same code the dashboard runs.
 
-type Ctx = OpCtx & { query: string; api: ApiContext };
+type Ctx = OpCtx & { query: string; board: string; api: ApiContext };
 type Annotations = { readOnlyHint?: boolean; destructiveHint?: boolean; idempotentHint?: boolean; openWorldHint?: boolean };
 type Result = { content: { type: "text"; text: string }[]; isError?: boolean };
 
@@ -108,13 +108,13 @@ export function createMcpServer(api: ApiContext, requestOrigin: string) {
     },
     {},
     async (_args, ctx) => {
-      if (api.scope === "workspace") return { scope: "workspace", workspaces: [{ id: ctx.workspace.id, name: ctx.workspace.name, role: "admin", url: link(ctx, "/") }] };
+      if (api.scope === "workspace") return { scope: "workspace", workspaces: [{ id: ctx.workspace.id, name: ctx.workspace.name, role: "admin", url: link(ctx, ctx.board) }] };
       // Only the ones this key can act on: its owner must be an admin there.
       const rows = (await ws.workspacesOf(api.db, api.userId!)).filter((r) => r.role === "admin");
       const workspaces = [];
       for (const r of rows) {
-        const { origin, query } = await workspaceOrigin(r.id, requestOrigin);
-        workspaces.push({ id: r.id, name: r.name, role: r.role, website: r.website, url: `${origin}/${query}` });
+        const { origin, query, board } = await workspaceOrigin(r.id, requestOrigin);
+        workspaces.push({ id: r.id, name: r.name, role: r.role, website: r.website, url: `${origin}${board}${query}` });
       }
       return { scope: "account", home: api.workspaceId, workspaces };
     },
@@ -142,7 +142,7 @@ export function createMcpServer(api: ApiContext, requestOrigin: string) {
       const next = await apiOps(api, requestOrigin, id);
       return {
         id,
-        url: `${next.origin}/${next.query}`,
+        url: `${next.origin}${next.board}${next.query}`,
         dashboard: `${next.origin}/dashboard${next.query}`,
         accent: next.workspace.accent,
         theme: next.workspace.theme,
@@ -171,7 +171,7 @@ export function createMcpServer(api: ApiContext, requestOrigin: string) {
         publicBoard: { showRoadmap: w.showRoadmap, showChangelog: w.showChangelog, poweredBy: w.poweredBy },
         access: { whoCanPost: w.whoCanPost, anonymousVoting: w.anonymousVoting, requireApproval: w.requireApproval },
         statusEmails: w.statusEmails,
-        urls: { board: link(ctx, "/"), roadmap: link(ctx, "/roadmap"), changelog: link(ctx, "/changelog"), help: link(ctx, "/help"), dashboard: link(ctx, "/dashboard") },
+        urls: { board: link(ctx, ctx.board), roadmap: link(ctx, "/roadmap"), changelog: link(ctx, "/changelog"), help: link(ctx, "/help"), dashboard: link(ctx, "/dashboard") },
       };
     },
   );

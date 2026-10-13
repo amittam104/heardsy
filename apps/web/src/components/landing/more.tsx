@@ -18,7 +18,7 @@ export function Surfaces() {
   return (
     <Framed id="widget">
       <SectionHeader title="Put the board inside your app." sub="A widget for feedback, the roadmap and what's new, plus a help center that answers questions before they become posts." />
-      <div className="grid divide-y divide-border border-b border-border md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:divide-x md:divide-y-0">
+      <div className="grid grid-cols-[minmax(0,1fr)] divide-y divide-border border-b border-border md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:divide-x md:divide-y-0">
         <div className="flex flex-col justify-center gap-2 p-6">
           <Eyebrow className="mb-1">Widget</Eyebrow>
           <h3 className="text-lg font-semibold tracking-tighter text-balance">Feedback without leaving your product.</h3>
@@ -31,7 +31,7 @@ export function Surfaces() {
           </BlurFade>
         </div>
       </div>
-      <div className="grid divide-y divide-border md:grid-cols-2 md:divide-x md:divide-y-0">
+      <div className="grid grid-cols-[minmax(0,1fr)] divide-y divide-border md:grid-cols-2 md:divide-x md:divide-y-0">
         <Card eyebrow="Help center" title="Answer it once." sub="Write guides in markdown and publish them at /help." points={helpPoints}>
           <HelpMock />
         </Card>
@@ -58,7 +58,7 @@ function Points({ items }: { items: string[] }) {
 
 function Card({ eyebrow, title, sub, points, children }: { eyebrow: string; title: string; sub: string; points: string[]; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col">
+    <div className="flex min-w-0 flex-col">
       <div className="flex min-h-[260px] items-center justify-center overflow-hidden p-4 md:min-h-[300px] md:p-6">{children}</div>
       <div className="flex flex-col gap-2 p-6 pt-0">
         <Eyebrow className="mb-1">{eyebrow}</Eyebrow>
@@ -104,16 +104,16 @@ function UploadMock() {
   return (
     <div className="w-full max-w-[420px] rounded-xl border border-border bg-card p-4">
       <p className="text-[14px] leading-relaxed text-muted-foreground">The export button is cut off on small screens, see the second one.</p>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 grid max-w-[256px] grid-cols-3 gap-2">
         <Thumb />
         <Thumb crop />
-        <div className="flex size-20 items-center justify-center rounded-lg border border-dashed border-input text-faint">
+        <div className="flex aspect-square items-center justify-center rounded-lg border border-dashed border-input text-faint">
           <ImageIcon className="size-5" />
         </div>
       </div>
       <div className="mt-3 flex items-center justify-between border-t border-border pt-3 text-[12px] text-faint">
-        <span className="inline-flex items-center gap-1.5">
-          <ImageIcon className="size-3.5 text-link" />
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <ImageIcon className="size-3.5 shrink-0 text-link" />
           Paste or drop images
         </span>
         <span className="tabular-nums">2 of 4</span>
@@ -125,7 +125,7 @@ function UploadMock() {
 // A tiny drawn screenshot: header bar, two rows, one with a voted pill.
 function Thumb({ crop }: { crop?: boolean }) {
   return (
-    <div className="relative size-20 overflow-hidden rounded-lg border border-input bg-background p-2">
+    <div className="relative aspect-square min-w-0 overflow-hidden rounded-lg border border-input bg-background p-2">
       <div className="h-1.5 w-8 rounded-full bg-foreground/20" />
       <div className={cn("mt-2 flex items-center gap-1.5", crop && "translate-x-3")}>
         <div className="flex-1 space-y-1">

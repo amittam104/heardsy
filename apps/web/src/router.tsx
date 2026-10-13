@@ -19,8 +19,8 @@ export const getRouter = () => {
     defaultNotFoundComponent: () => (
       <main className="mx-auto max-w-3xl px-8 py-24 text-center">
         <h1 className="text-xl font-semibold">Nothing here</h1>
-        <p className="mt-2 text-muted-foreground">That page does not exist.</p>
-        <a href="/" className="mt-4 inline-block text-sm font-medium hover:underline">Back to the board</a>
+        <p className="mt-2 text-muted-foreground">That page does not exist. Check the address, or start again from the home page.</p>
+        <a href="/" className="mt-4 inline-block text-sm font-medium text-link hover:underline">Go to the home page</a>
       </main>
     ),
   });

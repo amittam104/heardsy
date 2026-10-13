@@ -5,6 +5,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 
 import type { Actor, OpCtx } from "./ops/context";
+import type { BoardPath } from "./session";
 
 // A workspace key reaches only its own workspace. An account key acts for the
 // person who made it, in any workspace they administer; `workspaceId` is the
@@ -100,7 +101,9 @@ export async function resolveApiWorkspace(ctx: ApiContext, slug?: string | null)
 // The public origin of a workspace: its subdomain in the cloud, the request's
 // own origin on a self-hosted install. Local dev without subdomains picks the
 // workspace with ?ws=, which `query` carries.
-export async function workspaceOrigin(workspaceId: string, requestOrigin: string): Promise<{ origin: string; query: string }> {
+// `board` is where the board lives on that origin: "/" on a workspace
+// subdomain, /feedback on a shared origin.
+export async function workspaceOrigin(workspaceId: string, requestOrigin: string): Promise<{ origin: string; query: string; board: BoardPath }> {
   const { env } = await import("@openheard/env/server");
   const vars = env as unknown as { ROOT_DOMAIN?: string; OPENHEARD_LOCAL?: string };
   const root = vars.ROOT_DOMAIN ?? null;
@@ -108,17 +111,17 @@ export async function workspaceOrigin(workspaceId: string, requestOrigin: string
     const req = new URL(requestOrigin || `https://${root}`);
     const local = root === "localhost";
     const protocol = local ? req.protocol : "https:";
-    return { origin: `${protocol}//${workspaceId}.${root}${local && req.port ? `:${req.port}` : ""}`, query: "" };
+    return { origin: `${protocol}//${workspaceId}.${root}${local && req.port ? `:${req.port}` : ""}`, query: "", board: "/" };
   }
   const query = workspaceId !== "default" && vars.OPENHEARD_LOCAL === "1" ? `?ws=${workspaceId}` : "";
-  return { origin: requestOrigin, query };
+  return { origin: requestOrigin, query, board: "/feedback" };
 }
 
 // The op context for an API or MCP call.
-export async function apiOps(ctx: ApiContext, requestOrigin: string, slug?: string | null): Promise<OpCtx & { query: string }> {
+export async function apiOps(ctx: ApiContext, requestOrigin: string, slug?: string | null): Promise<OpCtx & { query: string; board: BoardPath }> {
   const { workspace: ws, actor } = await resolveApiWorkspace(ctx, slug);
-  const { origin, query } = await workspaceOrigin(ws.id, requestOrigin);
-  return { db: ctx.db, workspace: ws, actor, origin, query };
+  const { origin, query, board } = await workspaceOrigin(ws.id, requestOrigin);
+  return { db: ctx.db, workspace: ws, actor, origin, query, board };
 }
 
 export class ApiError extends Error {

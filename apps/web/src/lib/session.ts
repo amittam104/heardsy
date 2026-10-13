@@ -100,6 +100,14 @@ export function isMarketingHost(host: string, rootDomainValue: string | null): b
   return h === root || h === "www." + root;
 }
 
+// A workspace's own subdomain opens on its board. The main origin (the cloud
+// apex, a self-hosted domain, local dev) opens on the landing page and serves
+// the board at /feedback.
+export type BoardPath = "/" | "/feedback";
+export function boardPathForHost(host: string, rootDomainValue: string | null): BoardPath {
+  return workspaceSlugFromHost(host, rootDomainValue) === "default" ? "/feedback" : "/";
+}
+
 // Workspace for a raw request (sitemap, RSS, API routes that have no session middleware).
 export async function workspaceFromRequest(request: Request): Promise<Workspace | null> {
   const slug = await workspaceSlugFromRequest(request);
@@ -108,16 +116,17 @@ export async function workspaceFromRequest(request: Request): Promise<Workspace 
   return ws ?? null;
 }
 
-const ctxCache = new WeakMap<Request, Promise<{ user: SessionUser | null; workspace: Workspace; marketing: boolean }>>();
+const ctxCache = new WeakMap<Request, Promise<Ctx>>();
 
 // `widget` is set only by widgetSessionMiddleware: the request then speaks for
 // whoever holds its widget token, never for the session cookie.
-async function resolveSession(request: Request, widget?: string) {
+async function resolveSession(request: Request, widget?: string): Promise<Ctx> {
   const [{ createDb, membership, workspace }, { createAuth, sessionForRequest }] = await Promise.all([import("@openheard/db"), import("@openheard/auth")]);
   const db = createDb();
   const host = request.headers.get("host") ?? "";
   const root = await rootDomain();
   const marketing = isMarketingHost(host, root);
+  const boardPath = boardPathForHost(host, root);
   const slug = await workspaceSlugFromRequest(request);
 
   const auth = createAuth({ demo: slug === DEMO_WORKSPACE_ID });
@@ -143,7 +152,7 @@ async function resolveSession(request: Request, widget?: string) {
   // The shared demo login is nobody outside the demo, whatever memberships
   // happen to exist. One check here covers every server function at once.
   if (session && session.user.id === DEMO_ADMIN_ID && ws.id !== DEMO_WORKSPACE_ID) {
-    return { user: null, workspace: ws, marketing };
+    return { user: null, workspace: ws, marketing, boardPath };
   }
 
   let user: SessionUser | null = null;
@@ -165,7 +174,7 @@ async function resolveSession(request: Request, widget?: string) {
       privateAccess: !viaWidget && (role === "admin" || !!m?.privateAccess),
     };
   }
-  return { user, workspace: ws, marketing };
+  return { user, workspace: ws, marketing, boardPath };
 }
 
 async function widgetSession(db: Db, token: string, workspaceId: string) {
@@ -211,7 +220,7 @@ export const widgetSessionMiddleware = createMiddleware().server(async ({ next, 
   return next({ context: await getWidgetSessionContext(request) });
 });
 
-export type Ctx = { user: SessionUser | null; workspace: Workspace; marketing: boolean };
+export type Ctx = { user: SessionUser | null; workspace: Workspace; marketing: boolean; boardPath: BoardPath };
 
 export function requireUser(user: SessionUser | null): SessionUser {
   if (!user) throw new Error("Sign in to do that");

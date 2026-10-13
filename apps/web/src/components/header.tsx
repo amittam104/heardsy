@@ -5,20 +5,22 @@ import { useEffect, useRef, useState } from "react";
 import { Kbd } from "./bits";
 import Logo from "./logo";
 import { ThemeSwitch } from "./theme-switch";
+import { boardThemeKey } from "@/lib/visitor-theme";
+import { workspaceLabel } from "@/lib/workspace-url";
 import UserMenu from "./user-menu";
 import { cn } from "@openheard/ui/lib/utils";
-
-const links = [
-  { to: "/", label: "Board" },
-  { to: "/roadmap", label: "Roadmap" },
-  { to: "/changelog", label: "Changelog" },
-  { to: "/help", label: "Help" },
-] as const;
 
 export default function Header() {
   const data = useLoaderData({ from: "__root__" });
   const { pathname } = useLocation();
-  const current = pathname.startsWith("/roadmap") ? "/roadmap" : pathname.startsWith("/changelog") ? "/changelog" : pathname.startsWith("/help") ? "/help" : "/";
+  const board = data?.boardPath ?? "/";
+  const links = [
+    { to: board, label: "Board" },
+    { to: "/roadmap", label: "Roadmap" },
+    { to: "/changelog", label: "Changelog" },
+    { to: "/help", label: "Help" },
+  ] as const;
+  const current = pathname.startsWith("/roadmap") ? "/roadmap" : pathname.startsWith("/changelog") ? "/changelog" : pathname.startsWith("/help") ? "/help" : pathname === board ? board : null;
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileSearch, setMobileSearch] = useState(false);
 
@@ -40,9 +42,9 @@ export default function Header() {
         ) : (
           <>
             <div className="flex h-full items-center gap-3 md:gap-4">
-              <Link to="/" className="flex items-center gap-2.5 text-[14px] font-semibold tracking-[-0.01em] text-foreground">
+              <Link to={board} aria-label={`${workspaceLabel(data?.workspace.name)} feedback board`} className="flex items-center gap-2.5 rounded-md text-[14px] font-semibold tracking-[-0.01em] text-foreground outline-none">
                 {data?.workspace.logoUrl ? <img src={data.workspace.logoUrl} alt="" className="size-6 rounded-md object-cover" /> : <Logo />}
-                <span className="hidden sm:inline">{data?.workspace.name ?? "Heardsy"}</span>
+                <span className="hidden sm:inline">{workspaceLabel(data?.workspace.name)}</span>
               </Link>
               <span className="hidden h-4 w-px bg-input lg:block" aria-hidden />
               <nav className="hidden h-full items-center gap-0.5 lg:flex">
@@ -52,12 +54,13 @@ export default function Header() {
                     <Link
                       key={to}
                       to={to}
+                      aria-current={active ? "page" : undefined}
                       className={cn(
-                        "group/nav inline-flex h-8 cursor-pointer items-center gap-[7px] rounded-md px-2.5 text-[13px] font-medium select-none transition-colors duration-150 hover:bg-accent/60",
-                        active ? "text-foreground" : "text-faint hover:text-muted-foreground",
+                        "group/nav inline-flex h-8 cursor-pointer items-center gap-[7px] rounded-md px-2.5 text-[13px] font-medium outline-none select-none transition-colors duration-150 hover:bg-accent/60",
+                        active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                       )}
                     >
-                      <span className={cn("size-[5px] rounded-full transition-colors duration-200", active ? "bg-link" : "bg-transparent group-hover/nav:bg-input")} />
+                      <span aria-hidden className={cn("size-[5px] rounded-full transition-colors duration-200", active ? "bg-link" : "bg-transparent group-hover/nav:bg-input")} />
                       {label}
                     </Link>
                   );
@@ -74,7 +77,7 @@ export default function Header() {
                 <MagnifyingGlassIcon className="size-[18px]" />
               </button>
               <Search />
-              {data ? <ThemeSwitch workspaceId={data.workspace.id} fallback={data.workspace.theme === "light" ? "light" : "dark"} /> : null}
+              {data ? <ThemeSwitch storageKey={boardThemeKey(data.workspace.id)} fallback={data.workspace.theme === "light" ? "light" : "dark"} /> : null}
               <UserMenu />
               <button
                 type="button"
@@ -99,12 +102,13 @@ export default function Header() {
                   key={to}
                   to={to}
                   onClick={() => setMenuOpen(false)}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
                     "flex h-11 items-center gap-[7px] rounded-md px-2.5 text-[14px] font-medium transition-colors duration-150",
                     active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <span className={cn("size-[5px] rounded-full", active ? "bg-link" : "bg-transparent")} />
+                  <span aria-hidden className={cn("size-[5px] rounded-full", active ? "bg-link" : "bg-transparent")} />
                   {label}
                 </Link>
               );
@@ -118,6 +122,7 @@ export default function Header() {
 
 function MobileSearchBar({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
+  const board = useLoaderData({ from: "__root__" })?.boardPath ?? "/";
   const ref = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState("");
 
@@ -127,10 +132,11 @@ function MobileSearchBar({ onClose }: { onClose: () => void }) {
 
   return (
     <form
+      role="search"
       className="flex w-full items-center gap-3"
       onSubmit={(e) => {
         e.preventDefault();
-        navigate({ to: "/", search: q ? { q } : {} });
+        navigate({ to: board, search: q ? { q } : {} });
         onClose();
       }}
     >
@@ -140,10 +146,12 @@ function MobileSearchBar({ onClose }: { onClose: () => void }) {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => e.key === "Escape" && onClose()}
+        type="search"
         placeholder="Search posts"
-        className="min-w-0 flex-1 bg-transparent text-[14px] text-foreground outline-none placeholder:text-faint"
+        aria-label="Search posts"
+        className="min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
       />
-      <button type="button" onClick={onClose} className="inline-flex size-10 shrink-0 items-center justify-center rounded-md text-faint hover:bg-accent hover:text-foreground">
+      <button type="button" onClick={onClose} aria-label="Close search" className="inline-flex size-10 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground">
         <XIcon className="size-4" />
       </button>
     </form>
@@ -152,6 +160,7 @@ function MobileSearchBar({ onClose }: { onClose: () => void }) {
 
 function Search() {
   const navigate = useNavigate();
+  const board = useLoaderData({ from: "__root__" })?.boardPath ?? "/";
   const { pathname } = useLocation();
   const ref = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState("");
@@ -173,10 +182,11 @@ function Search() {
 
   return (
     <form
+      role="search"
       className="relative hidden md:block"
       onSubmit={(e) => {
         e.preventDefault();
-        navigate({ to: "/", search: q ? { q } : {} });
+        navigate({ to: board, search: q ? { q } : {} });
       }}
     >
       <MagnifyingGlassIcon className="pointer-events-none absolute top-1/2 left-2.5 size-[14px] -translate-y-1/2 text-faint" />
@@ -186,7 +196,8 @@ function Search() {
         onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => e.key === "Escape" && (e.target as HTMLInputElement).blur()}
         placeholder="Search posts"
-        className="h-8 w-[220px] rounded-lg border bg-card pr-9 pl-8 text-[13px] text-foreground outline-none transition-colors placeholder:text-faint focus:border-ring/60 focus:ring-1 focus:ring-ring/40"
+        aria-label="Search posts"
+        className="h-8 w-[220px] rounded-lg border bg-card pr-9 pl-8 text-[13px] text-foreground outline-none transition-colors placeholder:text-faint focus:border-ring/60"
       />
       <Kbd className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2">/</Kbd>
     </form>

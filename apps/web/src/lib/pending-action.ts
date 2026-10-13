@@ -23,10 +23,10 @@ export function openSignIn(action: PendingAction) {
   emit();
 }
 
-export function closeSignIn() {
+export function closeSignIn({ keepAction = false } = {}) {
   dialogOpen = false;
   pendingAction = null;
-  sessionStorage.removeItem(STORAGE_KEY);
+  if (!keepAction) sessionStorage.removeItem(STORAGE_KEY);
   emit();
 }
 

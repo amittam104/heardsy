@@ -1,7 +1,6 @@
 import { CaretDownIcon, CaretUpIcon, CheckIcon, PaperPlaneTiltIcon } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
-import { useReducedMotion } from "motion/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@openheard/ui/components/button";
 import { cn } from "@openheard/ui/lib/utils";
@@ -12,7 +11,7 @@ import { BlurFade } from "./magic/blur-fade";
 import { NumberTicker } from "./magic/number-ticker";
 import { AnimatedSpan, Terminal, TypingAnimation } from "./magic/terminal";
 import { Eyebrow, Framed, SectionHeader, Shot } from "./shared";
-import { GITHUB } from "./top";
+import { ctaLink, GITHUB, useLandingCtas } from "./top";
 
 /* ---------------------------------------------------------------- product */
 
@@ -216,61 +215,17 @@ const own = [
   ["Cloud when you want it", "Same code, we host it. Move between the two with a CSV."],
 ];
 
-const OWN_ADVANCE_MS = 5000;
-
 export function Own() {
   const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const startRef = useRef(Date.now());
-  const rafRef = useRef<number>(0);
-  const reduce = useReducedMotion();
-
-  const advance = useCallback(() => {
-    setActive((i) => (i + 1) % own.length);
-    setProgress(0);
-    startRef.current = Date.now();
-  }, []);
-
-  // No auto-advance under reduced motion; the tabs still work on click.
-  useEffect(() => {
-    if (paused || reduce) {
-      cancelAnimationFrame(rafRef.current);
-      return;
-    }
-
-    startRef.current = Date.now() - progress * OWN_ADVANCE_MS;
-
-    const tick = () => {
-      const elapsed = Date.now() - startRef.current;
-      const p = Math.min(elapsed / OWN_ADVANCE_MS, 1);
-      setProgress(p);
-      if (p >= 1) {
-        advance();
-      } else {
-        rafRef.current = requestAnimationFrame(tick);
-      }
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [paused, reduce, active, advance, progress]);
-
-  const select = (i: number) => {
-    setActive(i);
-    setProgress(0);
-    startRef.current = Date.now();
-  };
 
   return (
     <section id="own" className="relative flex w-full scroll-mt-16 flex-col items-center justify-center gap-5">
       <SectionHeader title="Self-host is not a trial. It is the full product, forever." />
-      <div className="grid w-full items-center gap-6 px-4 pb-10 md:grid-cols-[400px_1fr] md:gap-10 md:px-6" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-        <div className="flex flex-col">
+      <div className="grid w-full grid-cols-[minmax(0,1fr)] items-center gap-6 px-4 pb-10 md:grid-cols-[400px_minmax(0,1fr)] md:gap-10 md:px-6">
+        <div className="flex min-w-0 flex-col">
           {own.map(([t, d], i) => (
-            <button key={t} type="button" onClick={() => select(i)} className={cn("relative flex flex-col gap-1 overflow-hidden rounded-lg px-4 py-3 text-left transition-colors md:px-5 md:py-4", active === i ? "bg-secondary/60" : "hover:bg-accent/40")}>
-              {active === i && (
-                <div className="absolute inset-y-0 left-0 w-0.5 rounded-full bg-link" style={{ height: `${progress * 100}%`, transition: paused ? "none" : undefined }} />
-              )}
+            <button key={t} type="button" onClick={() => setActive(i)} aria-expanded={active === i} className={cn("relative flex flex-col gap-1 overflow-hidden rounded-lg px-4 py-3 text-left transition-colors md:px-5 md:py-4", active === i ? "bg-secondary/60" : "hover:bg-accent/40")}>
+              {active === i && <div aria-hidden className="absolute inset-y-0 left-0 w-0.5 rounded-full bg-link" />}
               <span className={cn("text-[15px] font-medium", active === i ? "text-foreground" : "text-muted-foreground")}>{t}</span>
               <Collapsible open={active === i}>
                 <span className="block pt-1 text-[14px] leading-relaxed text-muted-foreground">{d}</span>
@@ -301,9 +256,11 @@ const plans = [
 // Template pricing: plain section gap-10 pb-10, SectionHeader, cards in a
 // grid with rows [header, button, hr, features], round check circles.
 export function Pricing() {
+  const { start } = useLandingCtas();
+  const cloud = start.href === "/start";
   return (
     <section id="pricing" className="relative flex w-full scroll-mt-16 flex-col items-center justify-center gap-10 pb-10">
-      <SectionHeader title="Unlimited users. Every plan." sub="Every feature is on Free. Pro adds workspaces and support, never seats." />
+      <SectionHeader title="Unlimited users. Every plan." sub={cloud ? "Every feature is on Free. Pro adds workspaces and support, never seats." : "These are Heardsy Cloud plans. This install is self-hosted, so every feature is already on, with no plan to pick."} />
       <div className="mx-auto grid w-full max-w-[820px] gap-4 px-6 min-[650px]:grid-cols-2">
         {plans.map((p) => (
           <div key={p.name} className={cn("relative grid h-full grid-rows-[auto_auto_auto_1fr] rounded-xl border", p.primary ? "border-input bg-accent" : "border-border bg-[#f9fafb]/[0.02]")}>
@@ -319,8 +276,8 @@ export function Pricing() {
               <p className="mt-2 text-sm text-muted-foreground">{p.desc}</p>
             </div>
             <div className="flex flex-col gap-2 p-4">
-              <Button full size="lg" nativeButton={false} variant={p.primary ? "primary" : "secondary"} render={<Link to="/start" />}>
-                {p.cta}
+              <Button full size="lg" nativeButton={false} variant={p.primary ? "primary" : "secondary"} render={ctaLink(cloud ? start.href : p.primary ? "#own" : start.href)}>
+                {cloud ? p.cta : p.primary ? "How self-hosting works" : start.label}
               </Button>
             </div>
             <hr className="border-border" />
@@ -393,21 +350,18 @@ export function Faq() {
 // Template CTA: a 400px rounded card with a background, title in the upper
 // half, button and subtext pinned at the bottom.
 export function Closing() {
+  const { start, account } = useLandingCtas();
+  const primary = account ?? start;
   return (
-    <section id="cta" className="flex w-full flex-col items-center justify-center">
-      <div className="w-full">
-        <div className="relative z-20 h-[400px] w-full overflow-hidden rounded-xl border border-border bg-card shadow-xl">
-          <div aria-hidden className="absolute inset-0 [background:radial-gradient(60%_80%_at_50%_0%,rgba(110,139,255,.28),transparent_70%)]" />
-          <div className="absolute inset-0 -top-24 flex flex-col items-center justify-center md:-top-40">
-            <h2 className="max-w-xs text-center text-3xl font-medium tracking-tighter text-balance md:max-w-xl md:text-7xl">Your users have opinions.</h2>
-            <div className="absolute bottom-10 flex flex-col items-center justify-center gap-3">
-              <Button size="lg" arrow nativeButton={false} render={<Link to="/start" />}>
-                Start for free
-              </Button>
-              <span className="text-sm text-muted-foreground">Or self-host on your own Cloudflare account</span>
-            </div>
-          </div>
-        </div>
+    <section id="cta" className="flex w-full flex-col items-center gap-8 px-6 py-20 text-center md:py-28">
+      <h2 className="max-w-xl text-3xl font-semibold tracking-[-0.03em] text-balance md:text-6xl">Your users have opinions.</h2>
+      <div className="flex flex-col items-center gap-3">
+        <Button size="lg" arrow nativeButton={false} render={ctaLink(primary.href)}>
+          {primary.label}
+        </Button>
+        <a href="#own" className="rounded-md text-sm text-muted-foreground underline-offset-4 outline-none hover:text-foreground hover:underline">
+          Or self-host on your own Cloudflare account
+        </a>
       </div>
     </section>
   );
@@ -433,7 +387,7 @@ export function Footer() {
             Heardsy
           </Link>
           <p className="font-medium tracking-tight text-muted-foreground">Open source feedback board. Post, vote, roadmap, changelog. Self-host or cloud.</p>
-          <p className="text-[12px] text-muted-foreground">AGPL-3.0 · © {new Date().getFullYear()} openheard</p>
+          <p className="text-[12px] text-muted-foreground">AGPL-3.0 · © {new Date().getFullYear()} Heardsy</p>
         </div>
         <div className="pt-5 md:w-1/2">
           <div className="flex flex-col items-start justify-start gap-y-5 md:flex-row md:items-start md:justify-between lg:pl-10">

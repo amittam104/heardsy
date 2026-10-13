@@ -256,13 +256,13 @@ function StartPage() {
                 ) : null}
               </div>
               {slug.length > 0 && slug.length < 5 && (
-                <p className="text-[13px] text-red-400">Slug must be at least 5 characters</p>
+                <p className="text-[13px] text-destructive">Slug must be at least 5 characters</p>
               )}
               {slugStatus?.available === true && (
                 <p className="text-[13px] text-emerald-500">Available</p>
               )}
               {slugStatus && !slugStatus.available && slug.length >= 5 && (
-                <p className="text-[13px] text-red-400">
+                <p className="text-[13px] text-destructive">
                   That slug is taken
                   {slugStatus.suggestion && (
                     <>

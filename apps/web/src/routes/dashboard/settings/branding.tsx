@@ -162,7 +162,7 @@ function MatchWebsite({ initialUrl, currentName, onApplied }: { initialUrl: stri
           </Button>
         </form>
       </Row>
-      {error ? <p className="pb-3 text-right text-xs text-red-400">{error}</p> : null}
+      {error ? <p className="pb-3 text-right text-xs text-destructive">{error}</p> : null}
       {state === "reading" ? (
         <div className="flex flex-col gap-2 border-t py-3.5" aria-hidden>
           {[0, 1, 2].map((i) => (

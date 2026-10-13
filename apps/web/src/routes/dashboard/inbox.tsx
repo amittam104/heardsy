@@ -69,7 +69,7 @@ function Inbox() {
   });
 
   return (
-    <Panel title={meta ? meta.label : "Posts"} className="flex" aside={<FilterColumn />} onSearch={setQ}>
+    <Panel title={meta ? meta.label : "Posts"} className="flex" aside={<FilterColumn />} onSearch={setQ} query={q}>
       <div className="flex w-full shrink-0 flex-col overflow-auto scrollbar-thin">
         <div className="flex items-center gap-1.5 px-3 pt-3 pb-2.5">
           <DropdownMenu>
@@ -147,7 +147,16 @@ function Inbox() {
             ) : null}
           </div>
         ) : null}
-        {needle && shown.length === 0 ? <p className="px-5 py-10 text-center text-sm text-faint">Nothing matches “{q}”.</p> : null}
+        {needle && shown.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 px-5 py-10 text-center">
+            <p className="text-sm text-pretty text-muted-foreground">
+              No posts match “<span className="break-all">{q}</span>”.
+            </p>
+            <Button variant="secondary" size="sm" onClick={() => setQ("")}>
+              Clear search
+            </Button>
+          </div>
+        ) : null}
         {shown.map((p) => {
           const on = search.post === p.id;
           const st = findStatus(statuses, p.status);
@@ -160,7 +169,7 @@ function Inbox() {
               search={{ ...search, post: on ? undefined : p.id }}
               resetScroll={false}
               viewTransition={false}
-              className={cn("relative shrink-0 border-t transition-colors duration-100", on ? "bg-accent before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-link" : "hover:bg-accent/50", "flex h-[50px] items-center gap-3.5 px-5")}
+              className={cn("relative shrink-0 border-t transition-colors duration-100", on ? "bg-accent before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-link" : "hover:bg-accent/50", "flex h-[50px] items-center gap-3.5 px-5 [--focus-offset:-2px]")}
             >
               <G weight={filled ? "fill" : "regular"} className="size-[17px] shrink-0" style={{ color: st.color }} aria-label={st.label} />
               <span className="min-w-0 truncate text-[14px] font-medium">
@@ -342,7 +351,7 @@ function Detail({ post: p, onClose, nav }: { post: PostData; onClose: () => void
   const comments = mergedTimeline.filter((t) => t.kind === "comment");
   const activity = mergedTimeline.filter((t) => t.kind === "activity");
   const shown = tab === "comments" ? comments : activity;
-  const chip = "inline-flex h-8 max-w-[168px] items-center gap-1.5 truncate rounded-md border border-input bg-card pr-2.5 pl-2.5 text-[13px] whitespace-nowrap outline-none hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring";
+  const chip = "inline-flex h-8 max-w-[168px] items-center gap-1.5 truncate rounded-md border border-input bg-card pr-2.5 pl-2.5 text-[13px] whitespace-nowrap outline-none hover:bg-accent";
   const G = GLYPH[KIND_ICON[current.kind]];
 
   return (
@@ -378,7 +387,7 @@ function Detail({ post: p, onClose, nav }: { post: PostData; onClose: () => void
 
         <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-auto px-6 py-5 scrollbar-thin">
-          <h1 className="text-[19px] leading-snug font-semibold tracking-[-0.01em]">{p.title}</h1>
+          <h2 className="text-[19px] leading-snug font-semibold tracking-[-0.01em]">{p.title}</h2>
           {p.body ? <div className="max-w-[70ch] whitespace-pre-wrap text-[15px] leading-[1.6] text-muted-foreground">{p.body}</div> : null}
           <AttachmentGallery items={p.attachments} className="max-w-[70ch]" />
 

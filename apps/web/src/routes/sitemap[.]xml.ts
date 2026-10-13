@@ -1,5 +1,5 @@
 import { createDb, helpArticle, helpCollection, post } from "@openheard/db";
-import { workspaceFromRequest } from "@/lib/session";
+import { boardPathForHost, rootDomain, workspaceFromRequest } from "@/lib/session";
 import { createFileRoute } from "@tanstack/react-router";
 import { and, eq, sql } from "drizzle-orm";
 
@@ -13,7 +13,10 @@ export const Route = createFileRoute("/sitemap.xml")({
         const origin = new URL(request.url).origin;
         const ws = await workspaceFromRequest(request);
 
-        const staticPages = ["/", "/roadmap", "/changelog", "/privacy", "/terms"];
+        const host = request.headers.get("host") ?? "";
+        const root = await rootDomain();
+        const board = boardPathForHost(host, root) === "/feedback" ? ["/feedback"] : [];
+        const staticPages = ["/", ...board, "/roadmap", "/changelog", "/privacy", "/terms"];
         const urls: string[] = staticPages.map(
           (path) =>
             `  <url><loc>${esc(origin + path)}</loc><changefreq>weekly</changefreq></url>`,

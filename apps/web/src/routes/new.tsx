@@ -25,7 +25,7 @@ function NewWorkspace() {
   const hasExistingWorkspace = !!ownWorkspaces && ownWorkspaces.length > 0;
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-6 px-5 py-16">
-      <a href="/" aria-label="openheard home">
+      <a href="/" aria-label="Heardsy home">
         <Logo size={32} />
       </a>
       <WorkspaceForm

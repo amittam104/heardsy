@@ -24,7 +24,11 @@ an admin panel.
 - Primary button is white on black with an inset arrow square on the right.
 - Statuses: review `#a99bd6`, planned `#cdb37a`, in progress `#6e8bff`,
   shipped `#7fb894`, closed `#63636b`.
-- Light theme mirrors on warm white `#f7f5f0`, same rules.
+- Light theme mirrors on warm white `#f7f5f0`, same rules, with darker
+  link, ring, muted, faint and destructive values for contrast. Take exact
+  values from `globals.css`.
+- The public board follows the visitor's Light, Dark or System choice, or
+  the workspace theme. The dashboard keeps its own choice, dark by default.
 
 ## Type
 
@@ -74,6 +78,9 @@ an admin panel.
 - Keyboard: `j` `k` move, `v` vote, `enter` open, `/` search, `c` new post,
   `cmd+enter` submit, `esc` close. Hints are visible in the footer.
 - Respect `prefers-reduced-motion`.
+- Focus is a 2px `--ring` outline on `:focus-visible`. Public pages and the
+  dashboard start with a skip link to the main content, and the active nav
+  item sets `aria-current="page"`.
 - Loading is a skeleton matching the layout. Errors sit next to the thing
   that failed. Empty states say what to do next in one line.
 

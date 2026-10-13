@@ -402,7 +402,7 @@ export function Sent({ post }: { post: SentPost }) {
 export function BackBar({ onBack, right }: { onBack: () => void; right?: React.ReactNode }) {
   return (
     <div className="flex h-11 shrink-0 items-center justify-between gap-3 border-b px-3 pr-5">
-      <button type="button" onClick={onBack} className="inline-flex h-8 items-center gap-1.5 rounded-md px-1.5 text-[13px] text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/60">
+      <button type="button" onClick={onBack} className="inline-flex h-8 items-center gap-1.5 rounded-md px-1.5 text-[13px] text-muted-foreground outline-none hover:text-foreground">
         <ArrowLeftIcon className="size-3.5" /> Back to ideas
       </button>
       {right}
