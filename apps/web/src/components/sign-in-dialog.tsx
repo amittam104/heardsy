@@ -22,9 +22,8 @@ export function SignInDialog() {
   const callbackURL = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/";
 
   async function onSuccess() {
-    closeSignIn();
+    closeSignIn({ keepAction: true });
     await router.invalidate();
-    await replayPendingAction(router);
   }
 
   return (
