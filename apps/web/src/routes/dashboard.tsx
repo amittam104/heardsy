@@ -63,6 +63,14 @@ function AdminLayout() {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const desktop = window.matchMedia("(min-width: 48rem)");
+    const close = () => desktop.matches && setMobileOpen(false);
+    close();
+    desktop.addEventListener("change", close);
+    return () => desktop.removeEventListener("change", close);
+  }, [mobileOpen]);
   const [navOpen, setNavOpen] = useState(false);
   useEffect(() => {
     setNavOpen(localStorage.getItem("oh:sidebar") === "full");

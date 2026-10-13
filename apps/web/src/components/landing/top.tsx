@@ -61,6 +61,15 @@ export function Nav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const desktop = window.matchMedia("(min-width: 48rem)");
+    const close = () => desktop.matches && setDrawerOpen(false);
+    close();
+    desktop.addEventListener("change", close);
+    return () => desktop.removeEventListener("change", close);
+  }, [drawerOpen]);
+
   const primary = account ?? start;
 
   return (
