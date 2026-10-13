@@ -72,14 +72,16 @@ export function Board({ path, posts: firstPage, total, search }: { path: BoardPa
       });
   }
 
+  const compose = useRef(tryCompose);
+  compose.current = tryCompose;
   useEffect(() => {
     const handler = () => {
       takeComposerRequest();
-      setComposing(true);
+      compose.current();
     };
     window.addEventListener("openheard:open-composer", handler);
     // Asked for before this page was listening.
-    if (takeComposerRequest()) setComposing(true);
+    if (takeComposerRequest()) compose.current();
     return () => window.removeEventListener("openheard:open-composer", handler);
   }, []);
 
