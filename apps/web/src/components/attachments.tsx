@@ -240,7 +240,7 @@ export function AttachmentGallery({ items, className, size = "md" }: { items: At
             onClick={() => setOpen(i)}
             aria-label={`View image ${i + 1} of ${items.length}`}
             className={cn(
-              "overflow-hidden rounded-lg border bg-secondary outline-none transition-[filter] hover:brightness-110 focus-visible:ring-1 focus-visible:ring-ring",
+              "overflow-hidden rounded-lg border bg-secondary outline-none transition-[filter] hover:brightness-110",
               single ? (size === "md" ? "max-h-[320px] max-w-full" : "max-h-[220px] max-w-full") : size === "md" ? "size-[120px]" : "size-24",
             )}
           >
@@ -299,11 +299,11 @@ function Lightbox({ items, index, onIndex }: { items: AttachmentView[]; index: n
           </span>
           <div className="flex items-center gap-1">
             {a ? (
-              <a href={a.url} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 outline-none hover:bg-accent hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring">
+              <a href={a.url} target="_blank" rel="noreferrer" className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 outline-none hover:bg-accent hover:text-foreground">
                 <ArrowSquareOutIcon className="size-3.5" /> Open original
               </a>
             ) : null}
-            <button type="button" onClick={() => onIndex(null)} className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 outline-none hover:bg-accent hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring">
+            <button type="button" onClick={() => onIndex(null)} className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 outline-none hover:bg-accent hover:text-foreground">
               <XIcon className="size-3.5" /> Close
             </button>
           </div>

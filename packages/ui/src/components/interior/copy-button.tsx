@@ -161,7 +161,7 @@ export function CopyButton({
       whileTap={disabled || reduced ? undefined : { y: 1 }}
       transition={CELL}
       style={{ borderRadius: 9, touchAction: "manipulation" }}
-      className={`inline-flex h-[30px] select-none items-center gap-2 rounded-lg border border-input bg-accent px-3 text-[13px] font-medium text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,.08)] outline-none transition-[border-color,box-shadow,background-color] duration-150 hover:bg-[color-mix(in_oklch,var(--accent),white_4%)] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/60 disabled:pointer-events-none disabled:opacity-50 ${className}`}
+      className={`inline-flex h-[30px] select-none items-center gap-2 rounded-lg border border-input bg-accent px-3 text-[13px] font-medium text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,.08)] outline-none transition-[border-color,box-shadow,background-color] duration-150 hover:bg-[color-mix(in_oklch,var(--accent),white_4%)] hover:text-foreground disabled:pointer-events-none disabled:opacity-50 ${className}`}
     >
       <span className="grid size-[14px] shrink-0" aria-hidden="true">
         <motion.svg

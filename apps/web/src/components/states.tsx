@@ -3,15 +3,15 @@ import { Skeleton } from "@openheard/ui/components/skeleton";
 export function ErrorState({ message, retry }: { message?: string; retry?: string }) {
   return (
     <div className="mx-auto flex max-w-md flex-col items-center gap-3 px-6 py-24 text-center">
-      <h2 className="text-lg font-semibold">Something went wrong</h2>
-      <p className="text-sm text-muted-foreground">{message ?? "An unexpected error occurred."}</p>
+      <h2 className="text-lg font-semibold">Unable to load this page</h2>
+      <p className="text-sm text-pretty text-muted-foreground">{message ?? "Check your connection and try again."}</p>
       {retry ? (
         <a href={retry} className="mt-1 text-sm font-medium text-link hover:underline">
           Try again
         </a>
       ) : (
         <a href="/" className="mt-1 text-sm font-medium text-link hover:underline">
-          Go home
+          Go to the home page
         </a>
       )}
     </div>
@@ -20,10 +20,10 @@ export function ErrorState({ message, retry }: { message?: string; retry?: strin
 
 export function DashboardErrorState({ message, retry }: { message?: string; retry?: string }) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col items-center justify-center gap-3 py-3 pr-3">
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center rounded-xl border bg-background px-6">
-        <h2 className="text-lg font-semibold">Something went wrong</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{message ?? "An unexpected error occurred."}</p>
+    <div className="flex min-w-0 flex-1 flex-col md:py-3 md:pr-3">
+      <div role="alert" className="flex min-h-0 flex-1 flex-col items-center justify-center bg-background px-6 text-center md:rounded-xl md:border">
+        <h2 className="text-lg font-semibold">Unable to load this page</h2>
+        <p className="mt-2 max-w-md text-sm text-pretty text-muted-foreground">{message ?? "Check your connection and try again."}</p>
         {retry ? (
           <a href={retry} className="mt-3 text-sm font-medium text-link hover:underline">
             Try again
@@ -167,8 +167,8 @@ export function ChangelogSkeleton() {
 
 export function DashboardShellSkeleton() {
   return (
-    <div className="flex h-dvh overflow-hidden bg-[#0a0a0b] text-foreground">
-      <aside className="hidden w-60 shrink-0 md:block">
+    <div className="flex h-dvh overflow-hidden bg-sidebar text-foreground">
+      <aside className="hidden w-[200px] shrink-0 md:block">
         <div className="flex h-full flex-col px-4 pt-3.5 pb-4">
           <Skeleton className="mb-1 h-7 w-28 rounded-md" />
           <div className="flex flex-col gap-1 pt-4">
@@ -191,8 +191,8 @@ export function DashboardShellSkeleton() {
 
 export function DashboardPanelSkeleton() {
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col py-3 pr-3">
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-background">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col md:py-3 md:pr-3">
+      <div aria-busy="true" aria-label="Loading" className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background md:rounded-xl md:border">
         <div className="flex h-[52px] shrink-0 items-center justify-between border-b px-5">
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-[30px] w-[220px] rounded-lg" />

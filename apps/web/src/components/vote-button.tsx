@@ -193,7 +193,7 @@ export function VoteButton({
       transition={CELL}
       style={{ touchAction: "manipulation" }}
       className={cn(
-        "relative flex shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border select-none transition-[background-color,border-color,box-shadow,color] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:outline-none motion-reduce:transition-none",
+        "relative flex shrink-0 flex-col items-center justify-center gap-0.5 rounded-lg border select-none transition-[background-color,border-color,box-shadow,color] duration-200 ease-out motion-reduce:transition-none",
         lg ? "h-16 w-14 rounded-xl" : "h-14 w-12",
         on
           ? "border-link bg-link text-[var(--link-foreground,#0d0d0f)] shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_2px_10px_color-mix(in_oklch,var(--link)_28%,transparent)]"

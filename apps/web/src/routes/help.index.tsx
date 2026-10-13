@@ -242,7 +242,7 @@ function SearchBox({ value, onChange, hits, disabled }: { value: string; onChang
         aria-label="Search help articles"
         autoComplete="off"
         spellCheck={false}
-        className="h-12 w-full rounded-xl border border-input bg-card pr-16 pl-11 text-[15px] text-foreground outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-faint focus:border-ring/60 focus:ring-1 focus:ring-ring/40 disabled:opacity-60"
+        className="h-12 w-full rounded-xl border border-input bg-card pr-16 pl-11 text-[15px] text-foreground outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-faint focus:border-ring/60 disabled:opacity-60"
       />
       {value ? (
         <button type="button" onClick={() => (onChange(""), ref.current?.focus())} aria-label="Clear search" className="absolute top-1/2 right-3 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-faint hover:bg-accent hover:text-foreground">

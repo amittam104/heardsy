@@ -252,7 +252,7 @@ export function NewPostDialog({
               <AttachButton
                 drafts={images}
                 className={cn(
-                  "inline-flex h-14 items-center justify-center gap-2 rounded-md border border-dashed border-input text-faint outline-none transition-colors hover:border-ring/60 hover:bg-accent hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring",
+                  "inline-flex h-14 items-center justify-center gap-2 rounded-md border border-dashed border-input text-faint outline-none transition-colors hover:border-ring/60 hover:bg-accent hover:text-foreground",
                   images.drafts.length ? "w-[72px]" : "px-3.5 text-xs",
                 )}
               >
@@ -273,7 +273,7 @@ export function NewPostDialog({
         <div className="flex items-center justify-between border-t bg-background px-4 py-3 pr-3 sm:px-5">
           <div className="flex items-center gap-3">
             <DropdownMenu>
-              <DropdownMenuTrigger className="inline-flex h-7 items-center gap-1.5 rounded-md border border-input bg-secondary pr-2 pl-2.5 text-[13px] text-foreground outline-none hover:bg-accent focus-visible:ring-1 focus-visible:ring-ring">
+              <DropdownMenuTrigger className="inline-flex h-7 items-center gap-1.5 rounded-md border border-input bg-secondary pr-2 pl-2.5 text-[13px] text-foreground outline-none hover:bg-accent">
                 <span className="size-1.5 rounded-full bg-link" />
                 {board?.name ?? "Board"}
                 <CaretDownIcon className="size-2.5 text-faint" />

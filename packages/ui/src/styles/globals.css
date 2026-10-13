@@ -23,15 +23,15 @@
   --secondary: #eeece6;
   --secondary-foreground: #141416;
   --muted: #eeece6;
-  --muted-foreground: #6b6b73;
+  --muted-foreground: #5c5c64;
   --accent: #e9e7e0;
   --accent-foreground: #141416;
-  --destructive: #c2410c;
+  --destructive: #9a3108;
   --border: #e3e0d8;
   --input: #e3e0d8;
-  --ring: #6e8bff;
-  --link: #4f6ef5;
-  --faint: #8a8a91;
+  --ring: #3a57d6;
+  --link: #3a57d6;
+  --faint: #68686f;
   --status-review: #7f6fc4;
   --status-planned: #a8883f;
   --status-progress: #4f6ef5;
@@ -45,7 +45,7 @@
   --sidebar-accent: #e9e7e0;
   --sidebar-accent-foreground: #141416;
   --sidebar-border: #e3e0d8;
-  --sidebar-ring: #6e8bff;
+  --sidebar-ring: #3a57d6;
   --chart-1: #6e8bff;
   --chart-2: #a99bd6;
   --chart-3: #7fb894;
@@ -80,7 +80,7 @@
   --status-progress: #6e8bff;
   --status-shipped: #3ecf8e;
   --status-closed: #7a7a85;
-  --sidebar: #0d0d0f;
+  --sidebar: #0a0a0b;
   --sidebar-foreground: #ededf0;
   --sidebar-primary: #ffffff;
   --sidebar-primary-foreground: #0d0d0f;
@@ -161,6 +161,13 @@
   ::selection {
     background: color-mix(in oklch, var(--link) 35%, transparent);
   }
+}
+
+/* Unlayered so it outranks `outline-none` in component classes. */
+/* Fields that draw focus on their wrapper opt out with data-focus="parent". */
+:focus-visible:not([tabindex="-1"], [data-slot="input-group-control"], [data-focus="parent"]) {
+  outline: 2px solid var(--ring);
+  outline-offset: var(--focus-offset, 2px);
 }
 
 @utility scrollbar-thin {

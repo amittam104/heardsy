@@ -22,7 +22,8 @@ export function useKeyNav(count: number, handlers: { open: (i: number) => void; 
         if (e.key === "Escape") t.blur();
         return;
       }
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (t?.closest("select, [role=dialog], [role=alertdialog], [role=menu], [role=listbox], [role=combobox], [role=radiogroup], [role=tablist], [role=toolbar], [role=grid], [role=tree], [role=slider], [role=spinbutton]")) return;
       const i = focusedRef.current;
       switch (e.key) {
         case "j":
@@ -36,7 +37,7 @@ export function useKeyNav(count: number, handlers: { open: (i: number) => void; 
           setFocused(Math.max(0, i - 1));
           break;
         case "Enter":
-          if (i >= 0) h.current.open(i);
+          if (i >= 0 && !t?.closest("a, button")) h.current.open(i);
           break;
         case "v":
           e.preventDefault();
