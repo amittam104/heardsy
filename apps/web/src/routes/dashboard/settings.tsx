@@ -34,10 +34,10 @@ function SettingsLayout() {
   const groups = SETTINGS_NAV.map((g) => ({ group: g.group, items: g.items.filter(([slug]) => shown(slug)) })).filter((g) => g.items.length > 0);
   const onLocked = locked.some((slug) => pathname === `/dashboard/settings/${slug}`);
   return (
-    <Panel title="Settings" className="flex flex-col md:flex-row">
-      <nav data-settings-nav className="flex shrink-0 flex-row gap-1 overflow-x-auto border-b px-3 py-2 md:w-[220px] md:flex-col md:overflow-x-hidden md:overflow-y-auto md:border-r md:border-b-0 md:pt-3 md:pb-4">
-        <Link to={teammate ? "/dashboard/private" : "/dashboard"} className="hidden h-[30px] cursor-pointer items-center gap-2 rounded-md px-2 text-sm font-semibold select-none hover:bg-accent/60 md:flex">
-          <ArrowLeftIcon className="size-[13px] text-faint" /> Settings
+    <Panel title="Settings" heading={false} className="flex flex-col md:flex-row">
+      <nav data-settings-nav aria-label="Settings" className="flex shrink-0 flex-row gap-1 overflow-x-auto border-b px-3 py-2 md:w-[220px] md:flex-col md:overflow-x-hidden md:overflow-y-auto md:border-r md:border-b-0 md:pt-3 md:pb-4">
+        <Link to={teammate ? "/dashboard/private" : "/dashboard"} className="hidden h-8 cursor-pointer items-center gap-2 rounded-md px-2 text-sm font-semibold outline-none select-none hover:bg-accent/60 md:flex">
+          <ArrowLeftIcon aria-hidden className="size-[13px] text-muted-foreground" /> Back to dashboard
         </Link>
         {groups.map((g) => (
           <div key={g.group} className="flex flex-row gap-0.5 md:flex-col md:pt-3.5">
@@ -46,7 +46,7 @@ function SettingsLayout() {
               const to = `/dashboard/settings/${slug}`;
               const on = pathname === to;
               return (
-                <Link key={slug} to={to} preload="viewport" className={cn("flex h-7 cursor-pointer items-center whitespace-nowrap rounded-md px-2 text-[13px] select-none", on ? "bg-secondary font-semibold text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground")}>
+                <Link key={slug} to={to} preload="viewport" aria-current={on ? "page" : undefined} className={cn("flex h-8 shrink-0 cursor-pointer items-center whitespace-nowrap rounded-md px-2 text-[13px] outline-none select-none", on ? "bg-secondary font-semibold text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground")}>
                   {label}
                 </Link>
               );
@@ -58,7 +58,7 @@ function SettingsLayout() {
         {/* The widget page keeps its live preview beside the form. */}
         <div className={pathname === "/dashboard/settings/widget" || pathname === "/dashboard/settings/private-widget" ? "max-w-[1400px]" : "max-w-[920px]"}>
           {onLocked ? (
-            <p className="text-[13px] text-muted-foreground">Not available in the demo workspace.</p>
+            <p className="text-[13px] text-muted-foreground">This setting is not available in the demo workspace. Create your own workspace to change it.</p>
           ) : (
             <Outlet />
           )}

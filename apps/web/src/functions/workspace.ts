@@ -1,10 +1,12 @@
 import { board, createDb, helpArticle, membership, post, status, tag, workspace } from "@openheard/db";
 import { createServerFn } from "@tanstack/react-start";
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, or } from "drizzle-orm";
 import { z } from "zod";
 
 import { getCached, setCached } from "@/lib/kv-cache";
-import { rootDomain, sessionMiddleware } from "@/lib/session";
+import { DEMO_WORKSPACE_ID } from "@/lib/demo";
+import { type Ctx, localDev, rootDomain, sessionMiddleware } from "@/lib/session";
+import { signedInHome } from "@/lib/workspace-url";
 import type { listStatuses } from "@/lib/status-db";
 
 type WorkspaceCache = {
@@ -75,6 +77,21 @@ export const getLegalUrl = createServerFn({ method: "GET" })
     return url.startsWith("/") ? null : url;
   });
 
+// Local dev serves every workspace from one origin, so signing in there lands
+// on default. Someone without dashboard access to default goes on to the
+// newest workspace whose dashboard they can open, picked with ?ws=.
+async function localDashboard({ user, workspace: ws }: Ctx): Promise<string | null> {
+  if (!user || user.role === "admin" || user.privateAccess || ws.id !== "default" || !(await localDev())) return null;
+  const rows = await createDb()
+    .select({ id: workspace.id, name: workspace.name, role: membership.role, privateAccess: membership.privateAccess })
+    .from(membership)
+    .innerJoin(workspace, eq(workspace.id, membership.workspaceId))
+    .where(and(eq(membership.userId, user.id), or(eq(membership.role, "admin"), eq(membership.privateAccess, true))))
+    .orderBy(membership.createdAt);
+  const latest = rows.filter((r) => r.id !== "default" && r.id !== DEMO_WORKSPACE_ID).at(-1);
+  return latest ? `${signedInHome(latest, latest.name, "/")}?ws=${latest.id}` : null;
+}
+
 export const getWorkspace = createServerFn({ method: "GET" })
   .middleware([sessionMiddleware])
   .handler(async ({ context }) => {
@@ -94,14 +111,11 @@ export const getWorkspace = createServerFn({ method: "GET" })
         workspace: ws,
         rootDomain: await rootDomain(),
         marketing: true as const,
-        boards: [] as WorkspaceCache["boards"],
-        tags: [] as WorkspaceCache["tags"],
-        statuses: [] as WorkspaceCache["statuses"],
-        statusCounts: {} as Record<string, number>,
-        total: 0,
-        helpArticles: 0,
+        boardPath: context.boardPath,
+        ...(await fetchWorkspaceData(ws.id)),
         user: context.user,
         ownWorkspaces,
+        localDashboard: null,
         googleSignIn: await googleSignIn(),
         ogImage: await ogImage(),
         links: await siteLinks(),
@@ -113,8 +127,10 @@ export const getWorkspace = createServerFn({ method: "GET" })
       workspace: ws,
       rootDomain: await rootDomain(),
       marketing: context.marketing,
+      boardPath: context.boardPath,
       ...data,
       user: context.user,
+      localDashboard: await localDashboard(context),
       googleSignIn: await googleSignIn(),
       ogImage: await ogImage(),
       links: await siteLinks(),

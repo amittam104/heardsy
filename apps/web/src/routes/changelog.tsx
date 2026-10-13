@@ -13,6 +13,7 @@ import { ChangelogSkeleton, ErrorState } from "@/components/states";
 import { deleteChangelog, listChangelog, saveChangelog } from "@/functions/changelog";
 import { subscribeChangelog } from "@/functions/notifications";
 import { searchPosts } from "@/functions/posts";
+import { requestComposer } from "@/lib/pending-action";
 import { cn } from "@openheard/ui/lib/utils";
 
 export const Route = createFileRoute("/changelog")({
@@ -53,7 +54,7 @@ function ChangelogPage() {
           New entry
         </Button>
       ) : (
-        <Button full arrow size="lg" onClick={() => router.navigate({ to: "/" })} className="brand-cta">
+        <Button full arrow size="lg" onClick={() => router.navigate({ to: root.boardPath }).then(requestComposer)} className="brand-cta">
           Post idea
         </Button>
       )}

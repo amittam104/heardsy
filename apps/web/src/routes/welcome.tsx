@@ -47,7 +47,7 @@ function Welcome() {
             // Picks up the site's colours and logo; the board is usable before it lands.
             if (v.website) void prefillWorkspaceBrand({ data: { website: v.website } }).then(() => router.invalidate()).catch(() => {});
             await router.invalidate();
-            await router.navigate({ to: "/" });
+            await router.navigate({ to: "/dashboard" });
           } catch (err) {
             toast.error(err instanceof Error ? err.message : "Could not save");
           }

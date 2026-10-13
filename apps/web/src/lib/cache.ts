@@ -1,4 +1,4 @@
-const PUBLIC_PATHS = ["/", "/roadmap", "/changelog", "/widget.json", "/private-widget.json"];
+const PUBLIC_PATHS = ["/", "/feedback", "/roadmap", "/changelog", "/widget.json", "/private-widget.json"];
 const PUBLIC_PATH_PREFIXES = ["/p/"];
 const PRIVATE_PATHS = ["/dashboard", "/login", "/api", "/new", "/welcome", "/settings", "/demo"];
 

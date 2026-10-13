@@ -58,7 +58,7 @@ function RoadmapPage() {
       {posts.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Nothing planned yet.{" "}
-          <Link to="/" className="text-link hover:underline">
+          <Link to={root.boardPath} className="text-link hover:underline">
             Post an idea and vote
           </Link>{" "}
           on the ones you want.

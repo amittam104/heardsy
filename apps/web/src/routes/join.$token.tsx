@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useLoaderData, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -6,6 +6,8 @@ import { Button } from "@openheard/ui/components/button";
 import { WorkspaceLogo } from "@/components/logo";
 import { getUser } from "@/functions/get-user";
 import { acceptInvite } from "@/functions/invites";
+import { getWorkspace } from "@/functions/workspace";
+import { signedInHome } from "@/lib/workspace-url";
 
 export const Route = createFileRoute("/join/$token")({
   head: () => ({ meta: [{ title: "Accept invite · feedback" }] }),
@@ -19,6 +21,7 @@ export const Route = createFileRoute("/join/$token")({
 function JoinPage() {
   const { token } = Route.useParams();
   const router = useRouter();
+  const board = useLoaderData({ from: "__root__" }).boardPath;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -28,9 +31,11 @@ function JoinPage() {
     try {
       await acceptInvite({ data: { token } });
       setDone(true);
-      toast.success("You've joined the workspace!");
+      toast.success("You joined the workspace");
+      const fresh = await getWorkspace();
+      await router.invalidate();
       setTimeout(() => {
-        router.navigate({ to: "/" });
+        router.navigate({ href: signedInHome(fresh.user, fresh.workspace.name, fresh.boardPath) });
       }, 1500);
     } catch (e: any) {
       setError(e.message ?? "Failed to accept invite");
@@ -44,14 +49,14 @@ function JoinPage() {
         <WorkspaceLogo size={32} />
         {done ? (
           <div className="flex flex-col items-center gap-2 text-center">
-            <h1 className="text-[22px] font-semibold tracking-[-0.02em]">You're in!</h1>
-            <p className="text-sm text-muted-foreground">Redirecting to the board…</p>
+            <h1 className="text-[22px] font-semibold tracking-[-0.02em]">You’re in</h1>
+            <p role="status" className="text-sm text-muted-foreground">Taking you to the workspace…</p>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center gap-2 text-center">
             <h1 className="text-[22px] font-semibold tracking-[-0.02em]">Invite problem</h1>
-            <p className="text-sm text-muted-foreground">{error}</p>
-            <Link to="/" className="mt-2 text-sm text-faint hover:text-foreground">
+            <p className="text-sm text-muted-foreground">{error} Ask a workspace admin to send you a new invite link.</p>
+            <Link to={board} className="mt-2 text-sm text-link hover:underline">
               Go to the board
             </Link>
           </div>

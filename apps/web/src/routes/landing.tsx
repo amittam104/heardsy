@@ -1,10 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 import { Landing } from "@/components/landing/page";
 
-// Preview of the marketing page. In the cloud it is also served at the root
-// domain, see __root.tsx.
+// Preview of the marketing page on a workspace subdomain. The main origin
+// already serves it at "/".
 export const Route = createFileRoute("/landing")({
+  loader: async ({ parentMatchPromise }) => {
+    const parent = await parentMatchPromise;
+    if (parent.loaderData?.boardPath !== "/") throw redirect({ to: "/" });
+  },
   head: () => {
     const title = "Heardsy · the open source Canny alternative";
     const description =

@@ -1,11 +1,13 @@
-import { ListIcon } from "@phosphor-icons/react";
 import { Outlet, createFileRoute, redirect, useLoaderData, useLocation, useRouter } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
+import { OpenNav } from "@/components/admin/panel";
 import { AdminRail, AdminSidebar } from "@/components/admin/sidebar";
 import { NewPostDialog } from "@/components/new-post-dialog";
 import { DashboardErrorState, DashboardShellSkeleton } from "@/components/states";
 import { DemoBanner } from "@/components/demo-banner";
+import { SkipLink } from "@/components/bits";
+import { Dialog, DialogContent, DialogTitle } from "@openheard/ui/components/dialog";
 import { teammateAllowed } from "@/lib/admin-nav";
 import { isDemo } from "@/lib/demo";
 
@@ -13,7 +15,12 @@ export const Route = createFileRoute("/dashboard")({
   loader: async ({ parentMatchPromise, location }) => {
     const parent = await parentMatchPromise;
     const user = parent.loaderData?.user;
-    if (user?.role !== "admin" && !user?.privateAccess) throw redirect({ to: "/login" });
+    if (!user) throw redirect({ to: "/login", search: { redirect: location.href } });
+    // Signed in without dashboard access: back to the board, not round the sign-in page again.
+    if (user.role !== "admin" && !user.privateAccess) {
+      const local = parent.loaderData?.localDashboard;
+      throw redirect({ href: local ?? parent.loaderData?.boardPath ?? "/", reloadDocument: !!local });
+    }
     // Granted teammates handle private feedback only; the server refuses the rest anyway.
     if (user.role !== "admin" && !teammateAllowed(location.pathname)) throw redirect({ to: "/dashboard/private" });
     return { demo: isDemo(parent.loaderData?.workspace), admin: user.role === "admin" };
@@ -42,6 +49,11 @@ function AdminLayout() {
   }, [router, admin]);
   const [composing, setComposing] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navTrigger = useRef<HTMLElement | null>(null);
+  const openNav = useCallback((trigger: HTMLElement) => {
+    navTrigger.current = trigger;
+    setMobileOpen(true);
+  }, []);
   const openCompose = useCallback(() => setComposing(true), []);
   useEffect(() => {
     window.addEventListener("oh:compose", openCompose);
@@ -61,33 +73,28 @@ function AdminLayout() {
       return !o;
     });
   return (
-    <div className="flex h-dvh overflow-hidden bg-[#0a0a0b] text-foreground">
+    <div className="flex h-dvh overflow-hidden bg-sidebar text-foreground">
+      <SkipLink />
       {/* Desktop: icon rail always, filter column on Posts when open */}
       <aside className="hidden h-full shrink-0 md:flex" data-admin-sidebar>
         {navOpen ? <AdminSidebar onNewPost={() => setComposing(true)} onCollapse={toggleNav} /> : <AdminRail onExpand={toggleNav} onNewPost={() => setComposing(true)} />}
       </aside>
-      {/* Mobile sidebar sheet */}
-      {mobileOpen ? (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-60 bg-[#0a0a0b] shadow-lg animate-in slide-in-from-left duration-200">
-            <AdminSidebar onNewPost={() => { setComposing(true); setMobileOpen(false); }} onCollapse={() => setMobileOpen(false)} />
-          </aside>
-        </div>
-      ) : null}
-      {/* Mobile hamburger — shown only when sidebar is hidden */}
-      <button
-        type="button"
-        onClick={() => setMobileOpen(true)}
-        className="fixed top-3 left-3 z-40 inline-flex size-9 items-center justify-center rounded-lg bg-[#0a0a0b] text-muted-foreground md:hidden"
-        aria-label="Open menu"
-      >
-        <ListIcon className="size-5" />
-      </button>
-      <div className="flex min-w-0 flex-1 flex-col">
+      <Dialog open={mobileOpen} onOpenChange={setMobileOpen}>
+        <DialogContent
+          showClose={false}
+          finalFocus={navTrigger}
+          className="top-0 bottom-0 left-0 w-[min(16rem,85vw)] max-w-none translate-x-0 translate-y-0 gap-0 rounded-none border-0 border-r bg-sidebar p-0 data-open:slide-in-from-left md:hidden"
+        >
+          <DialogTitle className="sr-only">Navigation</DialogTitle>
+          <AdminSidebar onNewPost={() => { setComposing(true); setMobileOpen(false); }} onCollapse={() => setMobileOpen(false)} collapseLabel="Close navigation" />
+        </DialogContent>
+      </Dialog>
+      <main id="main" tabIndex={-1} className="flex min-w-0 flex-1 flex-col">
         {isDemo(root.workspace) ? <DemoBanner /> : null}
-        <Outlet />
-      </div>
+        <OpenNav.Provider value={openNav}>
+          <Outlet />
+        </OpenNav.Provider>
+      </main>
       {admin ? <NewPostDialog open={composing} onOpenChange={setComposing} boards={root.boards} signedIn={!!root.user} /> : null}
     </div>
   );

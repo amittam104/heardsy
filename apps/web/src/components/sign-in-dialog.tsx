@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { AuthForm } from "@/components/auth-form";
 import { closeSignIn, consumePendingAction, useSignInDialog } from "@/lib/pending-action";
 import { toggleVote, addComment } from "@/functions/posts";
+import { workspaceLabel } from "@/lib/workspace-url";
 
 export function SignInDialog() {
   const root = useLoaderData({ from: "__root__" });
@@ -16,9 +17,9 @@ export function SignInDialog() {
     replayPendingAction(router);
   }, [root.user, router]);
 
-  const wsName = root.workspace?.name ?? "Heardsy";
+  const wsName = workspaceLabel(root.workspace?.name);
   const hasGoogle = root.googleSignIn;
-  const callbackURL = typeof window !== "undefined" ? window.location.pathname : "/";
+  const callbackURL = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/";
 
   async function onSuccess() {
     closeSignIn();

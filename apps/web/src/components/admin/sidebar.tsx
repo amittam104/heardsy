@@ -25,6 +25,7 @@ import { Link, useLoaderData, useLocation, useRouter } from "@tanstack/react-rou
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
+import { Avatar } from "@/components/bits";
 import Logo from "@/components/logo";
 import { authClient } from "@/lib/auth-client";
 import { myWorkspaces } from "@/functions/admin";
@@ -50,10 +51,10 @@ function WorkspaceSwitcher() {
   const root = useLoaderData({ from: "__root__" });
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="group/ws flex h-7 items-center gap-2 rounded-md pr-1.5 pl-0.5 text-sm font-semibold outline-none hover:bg-accent/60 focus-visible:ring-1 focus-visible:ring-ring">
+      <DropdownMenuTrigger aria-label={`Workspace: ${root.workspace.name}. Switch workspace`} className="group/ws flex h-8 min-w-0 items-center gap-2 rounded-md pr-1.5 pl-1 text-sm font-semibold outline-none hover:bg-accent/60">
         <Logo size={18} />
         <span className="truncate text-[15px]">{root.workspace.name}</span>
-        <CaretDownIcon className="size-2.5 text-faint opacity-0 group-hover/ws:opacity-100" />
+        <CaretDownIcon aria-hidden className="size-2.5 shrink-0 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-52">
         <WorkspaceItems />
@@ -98,7 +99,7 @@ export function FilterColumn() {
   const inInbox = pathname.startsWith("/dashboard/inbox");
   const plain = inInbox && !status && !(search as { board?: string }).board && !(search as { tag?: string }).tag;
   return (
-    <aside className="flex h-full w-[220px] shrink-0 flex-col overflow-y-auto border-r px-3 pt-[15px] pb-4 [scrollbar-width:none]">
+    <aside className="hidden h-full w-[220px] shrink-0 flex-col overflow-y-auto border-r px-3 pt-[15px] pb-4 [scrollbar-width:none] md:flex">
       <div className="flex h-7 items-center pl-2">
         <span className="text-[15px] font-semibold">Posts</span>
       </div>
@@ -130,18 +131,18 @@ export function FilterColumn() {
 }
 
 // Expanded nav: workspace switcher, pages, account. Same destinations as the rail.
-export function AdminSidebar({ onNewPost, onCollapse }: { onNewPost?: () => void; onCollapse?: () => void }) {
+export function AdminSidebar({ onNewPost, onCollapse, collapseLabel = "Collapse sidebar" }: { onNewPost?: () => void; onCollapse?: () => void; collapseLabel?: string }) {
   const root = useLoaderData({ from: "__root__" });
   const { pathname, search } = useLocation();
   const inInbox = pathname.startsWith("/dashboard/inbox");
   const admin = root.user?.role === "admin";
 
   return (
-    <aside className="flex h-full min-h-0 w-[200px] flex-col px-3 pt-3.5 pb-4">
-      <div className="flex shrink-0 items-center justify-between px-1">
+    <nav aria-label="Dashboard" className="flex h-full min-h-0 w-full flex-col px-3 pt-3.5 pb-4 md:w-[200px]">
+      <div className="flex shrink-0 items-center justify-between gap-1 px-1">
         <WorkspaceSwitcher />
-        <button type="button" onClick={onCollapse} className="inline-flex size-7 items-center justify-center rounded-md text-faint hover:bg-accent hover:text-foreground" title="Collapse sidebar">
-          <SidebarSimpleIcon className="size-[15px]" />
+        <button type="button" onClick={onCollapse} aria-label={collapseLabel} title={collapseLabel} className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none hover:bg-accent hover:text-foreground">
+          <SidebarSimpleIcon aria-hidden className="size-4" />
         </button>
       </div>
 
@@ -162,10 +163,10 @@ export function AdminSidebar({ onNewPost, onCollapse }: { onNewPost?: () => void
       </div>
 
       <AccountMenu>
-        <Item to="/" icon={ArrowSquareOutIcon} label="Public board" />
+        <Item to={root.boardPath} icon={ArrowSquareOutIcon} label="Public board" />
         <Item to={admin ? "/dashboard/settings/general" : "/dashboard/settings/private-widget"} active={pathname.startsWith("/dashboard/settings")} icon={GearSixIcon} label="Settings" />
       </AccountMenu>
-    </aside>
+    </nav>
   );
 }
 
@@ -176,10 +177,13 @@ function AccountMenu({ children }: { children: ReactNode }) {
     <div className="flex shrink-0 flex-col gap-0.5 border-t pt-3">
       {children}
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex h-9 w-full items-center gap-2 rounded-md px-2 outline-none hover:bg-accent/60 focus-visible:ring-1 focus-visible:ring-ring">
-          <span className="size-[22px] rounded-full border border-input bg-accent" />
-          <span className="flex-1 truncate text-left text-[13px]">{root.user?.name}</span>
-          <CaretDownIcon className="size-3 text-faint" />
+        <DropdownMenuTrigger aria-label={`Account: ${root.user?.name ?? ""}`} className="flex h-10 w-full items-center gap-2 rounded-md px-2 outline-none hover:bg-accent/60">
+          <Avatar name={root.user?.name ?? "?"} image={root.user?.image} size={22} />
+          <span className="flex min-w-0 flex-1 flex-col text-left">
+            <span className="truncate text-[13px] font-medium">{root.user?.name}</span>
+            <span className="truncate text-xs text-muted-foreground">{root.user?.email}</span>
+          </span>
+          <CaretDownIcon aria-hidden className="size-3 shrink-0 text-muted-foreground" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="top" className="min-w-48">
           <DropdownMenuItem
@@ -204,9 +208,9 @@ function Group({ label, children }: { label?: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1 pt-4">
       {label ? (
-        <button type="button" onClick={() => setOpen((o) => !o)} className="group/g flex items-center justify-between px-2 pb-1 text-[13px] text-faint hover:text-muted-foreground">
+        <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="group/g flex items-center justify-between rounded-md px-2 pb-1 text-[13px] text-muted-foreground outline-none hover:text-foreground">
           {label}
-          <CaretDownIcon className={cn("size-2.5 opacity-0 transition-transform group-hover/g:opacity-100", !open && "-rotate-90 opacity-100")} />
+          <CaretDownIcon aria-hidden className={cn("size-2.5 transition-transform motion-reduce:transition-none", !open && "-rotate-90")} />
         </button>
       ) : null}
       <Collapsible open={open}>
@@ -221,10 +225,10 @@ function Expand({ icon: I, label, children }: { icon: Icon; label: string; child
   const [open, setOpen] = useState(false);
   return (
     <div className="flex flex-col gap-1">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-[13px] font-medium text-muted-foreground hover:bg-accent/60 hover:text-foreground">
-        <I className="size-4 shrink-0 text-muted-foreground" />
+      <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)} className="flex h-8 w-full items-center gap-2.5 rounded-md px-2 text-[13px] font-medium text-muted-foreground outline-none hover:bg-accent/60 hover:text-foreground">
+        <I aria-hidden className="size-4 shrink-0 text-muted-foreground" />
         <span className="min-w-0 flex-1 truncate text-left">{label}</span>
-        <CaretRightIcon className={cn("size-[11px] text-faint transition-transform", open && "rotate-90")} />
+        <CaretRightIcon aria-hidden className={cn("size-[11px] text-muted-foreground transition-transform motion-reduce:transition-none", open && "rotate-90")} />
       </button>
       <Collapsible open={open}>
         <div className="flex flex-col gap-1">{children}</div>
@@ -264,18 +268,18 @@ function Item({
 }) {
   const { pathname } = useLocation();
   const on = active ?? (to ? (exact ? pathname === to : pathname.startsWith(to) && to !== "/") : false);
-  const cls = cn("flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-md px-2 text-[13px] font-medium select-none", sub && "h-[30px] pl-[38px]", on ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground");
-  const icon = I ? <I weight={weight} style={iconColor ? { color: iconColor } : undefined} className={cn("size-4 shrink-0", !iconColor && (iconClassName ?? (on ? "text-foreground" : "text-muted-foreground")))} /> : null;
+  const cls = cn("flex h-8 w-full cursor-pointer items-center gap-2.5 rounded-md px-2 text-[13px] font-medium outline-none select-none", sub && "h-[30px] pl-[38px]", on ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground");
+  const icon = I ? <I aria-hidden weight={weight} style={iconColor ? { color: iconColor } : undefined} className={cn("size-4 shrink-0", !iconColor && (iconClassName ?? (on ? "text-foreground" : "text-muted-foreground")))} /> : null;
   const inner = (
     <>
       {icon}
       <span className="min-w-0 flex-1 truncate text-left">{label}</span>
-      {count !== undefined ? <span className="text-[13px] text-faint tabular-nums">{count}</span> : trailing}
+      {count !== undefined ? <span className="text-[13px] text-muted-foreground tabular-nums">{count}</span> : trailing}
     </>
   );
   if (to) {
     return (
-      <Link to={to} search={search} preload="viewport" className={cls}>
+      <Link to={to} search={search} preload="viewport" aria-current={on ? "page" : undefined} className={cls}>
         {inner}
       </Link>
     );
@@ -294,14 +298,14 @@ export function AdminRail({ onExpand, onNewPost }: { onExpand?: () => void; onNe
   const router = useRouter();
   const inInbox = pathname.startsWith("/dashboard/inbox");
   const admin = root.user?.role === "admin";
-  const cls = (on: boolean) => cn("inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg select-none", on ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground");
+  const cls = (on: boolean) => cn("inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg outline-none select-none", on ? "bg-secondary text-foreground" : "text-muted-foreground hover:bg-accent/60 hover:text-foreground");
   return (
     <TooltipProvider delay={300}>
     <aside className="flex h-full min-h-0 w-14 flex-col items-center py-3.5">
       <div className="flex min-h-0 w-full flex-1 flex-col items-center gap-1 overflow-y-auto [scrollbar-width:none]">
       <DropdownMenu>
         <Tip label={root.workspace.name}>
-          <DropdownMenuTrigger className="mb-2.5 inline-flex size-9 shrink-0 items-center justify-center rounded-lg outline-none hover:bg-accent/60 focus-visible:ring-1 focus-visible:ring-ring">
+          <DropdownMenuTrigger aria-label={`Workspace: ${root.workspace.name}. Switch workspace`} className="mb-2.5 inline-flex size-9 shrink-0 items-center justify-center rounded-lg outline-none hover:bg-accent/60">
             <Logo size={20} />
           </DropdownMenuTrigger>
         </Tip>
@@ -315,35 +319,35 @@ export function AdminRail({ onExpand, onNewPost }: { onExpand?: () => void; onNe
       {admin ? (
         <>
           <Tip label="Posts">
-            <Link to="/dashboard/inbox" preload="viewport" className={cls(inInbox)}>
+            <Link to="/dashboard/inbox" preload="viewport" aria-label="Posts" className={cls(inInbox)}>
               <TrayIcon className="size-[17px]" />
             </Link>
           </Tip>
           <Tip label="Roadmap">
-            <Link to="/dashboard/roadmap" preload="viewport" className={cls(pathname.startsWith("/dashboard/roadmap"))}>
+            <Link to="/dashboard/roadmap" preload="viewport" aria-label="Roadmap" className={cls(pathname.startsWith("/dashboard/roadmap"))}>
               <MapTrifoldIcon className="size-[17px]" />
             </Link>
           </Tip>
           <Tip label="Changelog">
-            <Link to="/dashboard/changelog" preload="viewport" className={cls(pathname.startsWith("/dashboard/changelog"))}>
+            <Link to="/dashboard/changelog" preload="viewport" aria-label="Changelog" className={cls(pathname.startsWith("/dashboard/changelog"))}>
               <MegaphoneIcon className="size-[17px]" />
             </Link>
           </Tip>
           <Tip label="Help center">
-            <Link to="/dashboard/help" preload="viewport" className={cls(pathname.startsWith("/dashboard/help"))}>
+            <Link to="/dashboard/help" preload="viewport" aria-label="Help center" className={cls(pathname.startsWith("/dashboard/help"))}>
               <LifebuoyIcon className="size-[17px]" />
             </Link>
           </Tip>
         </>
       ) : null}
       <Tip label="Private feedback">
-        <Link to="/dashboard/private" preload="viewport" className={cls(pathname.startsWith("/dashboard/private"))}>
+        <Link to="/dashboard/private" preload="viewport" aria-label="Private feedback" className={cls(pathname.startsWith("/dashboard/private"))}>
           <LockSimpleIcon className="size-[17px]" />
         </Link>
       </Tip>
       {admin ? (
         <Tip label="New post">
-          <button type="button" onClick={onNewPost} className={cls(false)}>
+          <button type="button" aria-label="New post" onClick={onNewPost} className={cls(false)}>
             <PlusIcon className="size-[17px]" />
           </button>
         </Tip>
@@ -352,23 +356,25 @@ export function AdminRail({ onExpand, onNewPost }: { onExpand?: () => void; onNe
       <div className="flex shrink-0 flex-col items-center gap-1 pt-1">
       {onExpand ? (
         <Tip label="Expand sidebar">
-          <button type="button" onClick={onExpand} className={cls(false)}>
+          <button type="button" aria-label="Expand sidebar" onClick={onExpand} className={cls(false)}>
             <SidebarSimpleIcon className="size-[17px]" />
           </button>
         </Tip>
       ) : null}
       <Tip label="Public board">
-        <Link to="/" preload="viewport" className={cls(false)}>
+        <Link to={root.boardPath} preload="viewport" aria-label="Public board" className={cls(false)}>
           <ArrowSquareOutIcon className="size-[17px]" />
         </Link>
       </Tip>
       <Tip label="Settings">
-        <Link to={admin ? "/dashboard/settings/general" : "/dashboard/settings/private-widget"} preload="viewport" className={cls(pathname.startsWith("/dashboard/settings"))}>
+        <Link to={admin ? "/dashboard/settings/general" : "/dashboard/settings/private-widget"} preload="viewport" aria-label="Settings" className={cls(pathname.startsWith("/dashboard/settings"))}>
           <GearSixIcon className="size-[17px]" />
         </Link>
       </Tip>
       <DropdownMenu>
-        <DropdownMenuTrigger className="mt-1.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full border border-input bg-accent outline-none focus-visible:ring-1 focus-visible:ring-ring" title={root.user?.name} />
+        <DropdownMenuTrigger aria-label={`Account: ${root.user?.name ?? ""}`} title={root.user?.name} className="mt-1.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full outline-none">
+          <Avatar name={root.user?.name ?? "?"} image={root.user?.image} size={28} />
+        </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="right" className="min-w-40">
           <DropdownMenuItem
             onClick={() =>

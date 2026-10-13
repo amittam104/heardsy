@@ -1,7 +1,7 @@
-// A visitor's light / dark / auto choice on a public board, kept in
-// localStorage per workspace. With no choice saved the board follows the
-// workspace's own theme. The inline head script applies the saved choice
-// before first paint; the hook keeps React in step afterwards.
+// A light / dark / auto choice kept in localStorage: per workspace on a
+// public board, where no choice means the workspace's own theme, and once
+// for the dashboard. The inline head script applies the saved choice before
+// first paint; the hook keeps React in step afterwards.
 import { useSyncExternalStore } from "react";
 
 import { contrast, parseColor } from "./brand-color";
@@ -9,24 +9,31 @@ import { contrast, parseColor } from "./brand-color";
 export type ThemeChoice = "light" | "dark" | "auto";
 
 const CHANGE = "openheard:theme";
-const key = (workspaceId: string) => `openheard:theme:${workspaceId}`;
+export const boardThemeKey = (workspaceId: string) => `openheard:theme:${workspaceId}`;
+export const DASHBOARD_THEME_KEY = "openheard:dashboard-theme";
 
-function read(workspaceId: string): ThemeChoice | null {
+function read(key: string): ThemeChoice | null {
   try {
-    const v = localStorage.getItem(key(workspaceId));
+    const v = localStorage.getItem(key);
     return v === "light" || v === "dark" || v === "auto" ? v : null;
   } catch {
     return null;
   }
 }
 
-export function saveThemeChoice(workspaceId: string, choice: ThemeChoice) {
+export function saveThemeChoice(key: string, choice: ThemeChoice) {
   try {
-    localStorage.setItem(key(workspaceId), choice);
+    localStorage.setItem(key, choice);
   } catch {
     // private mode: the choice lasts for this page only
   }
+  // Every colour transition would fire at once, so the swap snaps instead.
+  const still = document.createElement("style");
+  still.textContent = "*,*::before,*::after{transition:none !important}";
+  document.head.appendChild(still);
   window.dispatchEvent(new Event(CHANGE));
+  void document.body.offsetHeight;
+  requestAnimationFrame(() => requestAnimationFrame(() => still.remove()));
 }
 
 function subscribe(onChange: () => void) {
@@ -46,11 +53,11 @@ const systemDark = () => matchMedia("(prefers-color-scheme: dark)").matches;
 // The saved choice (or the workspace default) and whether the page is dark.
 // The server and the first client render use the workspace default, so
 // hydration matches; the head script has already set the real class.
-export function useVisitorTheme(workspaceId: string, fallback: "light" | "dark", enabled = true) {
+export function useVisitorTheme(key: string, fallback: "light" | "dark", enabled = true) {
   const snapshot = useSyncExternalStore(
     subscribe,
     () => {
-      const choice = (enabled && read(workspaceId)) || fallback;
+      const choice = (enabled && read(key)) || fallback;
       return `${choice}:${choice === "auto" ? systemDark() : choice === "dark"}`;
     },
     () => `${fallback}:${fallback === "dark"}`,
@@ -60,8 +67,8 @@ export function useVisitorTheme(workspaceId: string, fallback: "light" | "dark",
 }
 
 // Runs in <head> before the body paints. Kept tiny and self-contained.
-export function themeScript(workspaceId: string, fallback: "light" | "dark") {
-  return `(function(){try{var v=localStorage.getItem(${JSON.stringify(key(workspaceId))});var d=v==="dark"||(v==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(v!=="light"&&v!=="auto"&&${fallback === "dark"});document.documentElement.classList.toggle("dark",d)}catch(e){}})()`;
+export function themeScript(key: string, fallback: "light" | "dark") {
+  return `(function(){try{var v=localStorage.getItem(${JSON.stringify(key)});var d=v==="dark"||(v==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(v!=="light"&&v!=="auto"&&${fallback === "dark"});document.documentElement.classList.toggle("dark",d)}catch(e){}})()`;
 }
 
 const WHITE = { r: 255, g: 255, b: 255 };
