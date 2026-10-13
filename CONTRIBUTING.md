@@ -20,7 +20,7 @@ demo posts.
 
 ## Where things live
 
-- `apps/web/src/routes` pages, `admin/` is the dashboard
+- `apps/web/src/routes` pages, `dashboard/` is the dashboard
 - `apps/web/src/functions` server functions
 - `packages/db/src/schema` tables, `migrations/` generated with `bun run db:generate`
 - `packages/ui/src/components` shadcn-style components on Base UI

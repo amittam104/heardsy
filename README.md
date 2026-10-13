@@ -15,6 +15,8 @@
   <a href="docs/api.md">API</a> ·
   <a href="docs/mcp.md">MCP</a> ·
   <a href="DESIGN.md">Design</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
+  <a href="https://github.com/amittam104/heardsy/releases">Releases</a> ·
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
@@ -53,6 +55,8 @@ pay for. Self-hosting is the default, not the afterthought.
 
 **Manage**
 - Dashboard with inbox, internal notes, merge, pin, tags and ETA
+- Light, Dark or System theme for the dashboard, saved in the browser and
+  separate from the board theme
 - Custom statuses that drive the roadmap columns
 - Team invites, admin and member roles, join links
 - Import from a CSV export of Canny or similar tools; export to JSON and CSV
@@ -80,6 +84,18 @@ pay for. Self-hosting is the default, not the afterthought.
   feature requests with screenshots, no Heardsy account needed, read only by
   your team ([docs](docs/private-widget.md))
 - Multi-workspace: each workspace lives on its own subdomain
+
+### Routes
+
+- The main origin (the cloud apex, a self-hosted domain, local dev) opens on
+  the landing page. Its board is at `/feedback`; old `/` links with board
+  filters redirect there.
+- A workspace subdomain in the cloud opens on its board at `/` and previews
+  the landing page at `/landing`.
+- `/start` creates a workspace and, if you are signed out, your account in
+  one flow. Creating an account on the sign-in page makes only an account:
+  on a workspace it votes and comments, and on the cloud apex it is sent to
+  `/new` to create a workspace.
 
 Internal package names and the widget API (`window.openheard` and
 `data-openheard-open`) retain their upstream names for compatibility.
@@ -141,6 +157,10 @@ bun run db:seed         # optional demo posts
 Local development reads the same `packages/infra/.env` for auth and Google
 credentials, while keeping the app URL at `http://localhost:3003` and using
 the local SQLite database. No `apps/web/.env` is needed.
+
+Local dev has no subdomains, so `?ws=<slug>` picks the workspace. If your
+account has no dashboard access to the default workspace, signing in opens
+the dashboard of your newest workspace instead.
 
 Keyboard on the board: `j` `k` move, `v` vote, `enter` open, `/` search,
 `c` new post.
